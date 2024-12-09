@@ -175,26 +175,33 @@ $cursor: #fff;
 <style lang="scss" scoped>
 $bg:#2d3a4b;
 $dark_gray:#889aa4;
-$light_gray:#eee;
+$light_gray: #707070;
 
 .login-container {
   min-height: 100%;
   width: 100%;
   background-color: $bg;
   overflow: hidden;
+  background-image: url(../../assets/bg.jpg); //背景图
+  background-size: 100%;
+  display: flex;
+  align-items: center;
 
   .login-form {
     position: relative;
     width: 520px;
     max-width: 100%;
-    padding: 160px 35px 0;
+    padding: 30px 35px 0;
     margin: 0 auto;
     overflow: hidden;
+    background-color: #bfc0c2;  // 背景颜色
+    border-radius: 5px;             // 表单圆角
+    opacity: 0.35;                  // 透明度，值越小越越透明，取值为[0,1]
   }
 
   .tips {
     font-size: 14px;
-    color: #fff;
+    color: #f5f4f4;
     margin-bottom: 10px;
 
     span {
