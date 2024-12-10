@@ -1,65 +1,81 @@
 <template>
   <div class="login-container">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
-
+    <el-form v-if="!isRegistering" ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
+      <!-- 登录标题 -->
       <div class="title-container">
         <h3 class="title">欢迎登录电子相册</h3>
       </div>
 
+      <!-- 用户名输入 -->
       <el-form-item prop="username">
         <span class="svg-container">
           <svg-icon icon-class="user" />
         </span>
-        <el-input
-          ref="username"
-          v-model="loginForm.username"
-          placeholder="Username"
-          name="username"
-          type="text"
-          tabindex="1"
-          auto-complete="on"
-        />
+        <el-input v-model="loginForm.username" placeholder="Username" name="username" type="text" tabindex="1" auto-complete="on" />
       </el-form-item>
 
+      <!-- 密码输入 -->
       <el-form-item prop="password">
         <span class="svg-container">
           <svg-icon icon-class="password" />
         </span>
-        <el-input
-          :key="passwordType"
-          ref="password"
-          v-model="loginForm.password"
-          :type="passwordType"
-          placeholder="Password"
-          name="password"
-          tabindex="2"
-          auto-complete="on"
-          @keyup.enter.native="handleLogin"
-        />
+        <el-input v-model="loginForm.password" :type="passwordType" placeholder="Password" name="password" tabindex="2" auto-complete="on" @keyup.enter.native="handleLogin" />
         <span class="show-pwd" @click="showPwd">
           <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
         </span>
       </el-form-item>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
+      <!-- 登录按钮 -->
+      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:20px;" @click.native.prevent="handleLogin">登录</el-button>
 
+      <!-- 注册切换按钮 -->
       <div class="tips">
-        <span style="margin-right:20px;">username: admin</span>
-        <span> password: any</span>
+        <span>还没有账号？</span>
+        <el-button type="text" @click="toggleRegister">注册</el-button>
+      </div>
+    </el-form>
+
+    <!-- 注册表单 -->
+    <el-form v-else ref="registerForm" :model="registerForm" :rules="registerRules" class="login-form" auto-complete="on" label-position="left">
+      <!-- 注册标题 -->
+      <div class="title-container">
+        <h3 class="title">注册新用户</h3>
       </div>
 
+      <!-- 注册用户名 -->
+      <el-form-item prop="username">
+        <el-input v-model="registerForm.username" placeholder="Username" name="username" type="text" />
+      </el-form-item>
+
+      <!-- 注册密码 -->
+      <el-form-item prop="password">
+        <el-input v-model="registerForm.password" type="password" placeholder="Password" name="password" />
+      </el-form-item>
+
+      <!-- 注册邮箱 -->
+      <el-form-item prop="email">
+        <el-input v-model="registerForm.email" placeholder="Email" name="email" type="email" />
+      </el-form-item>
+
+      <!-- 注册提交按钮 -->
+      <el-button type="primary" style="width:100%;margin-bottom:20px;" @click.native.prevent="handleRegister">注册</el-button>
+
+      <!-- 返回登录按钮 -->
+      <el-button type="text" @click="toggleRegister">返回登录</el-button>
     </el-form>
   </div>
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
+import { register } from '@/api/user' // 导入新增的注册 API
+// import { validUsername } from '@/utils/validate'
 
 export default {
   name: 'Login',
   data() {
     const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
+      // if (!validUsername(value)) {
+      if (!value) {
         callback(new Error('请输入正确的用户名'))
       } else {
         callback()
@@ -73,37 +89,35 @@ export default {
       }
     }
     return {
+      isRegistering: false, // 切换登录/注册状态
       loginForm: {
-        username: 'admin',
-        password: '111111'
+        username: '',
+        password: ''
+      },
+      registerForm: {
+        username: '',
+        password: '',
+        email: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
         password: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
-      loading: false,
-      passwordType: 'password',
-      redirect: undefined
-    }
-  },
-  watch: {
-    $route: {
-      handler: function(route) {
-        this.redirect = route.query && route.query.redirect
+      registerRules: {
+        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
+        password: [{ required: true, trigger: 'blur', validator: validatePassword }],
+        email: [{ required: true, trigger: 'blur', type: 'email', message: '请输入正确的邮箱地址' }]
       },
-      immediate: true
+      loading: false,
+      passwordType: 'password'
     }
   },
   methods: {
+    toggleRegister() {
+      this.isRegistering = !this.isRegistering
+    },
     showPwd() {
-      if (this.passwordType === 'password') {
-        this.passwordType = ''
-      } else {
-        this.passwordType = 'password'
-      }
-      this.$nextTick(() => {
-        this.$refs.password.focus()
-      })
+      this.passwordType = this.passwordType === 'password' ? '' : 'password'
     },
     handleLogin() {
       this.$refs.loginForm.validate(valid => {
@@ -118,6 +132,20 @@ export default {
         } else {
           console.log('error submit!!')
           return false
+        }
+      })
+    },
+    handleRegister() {
+      this.$refs.registerForm.validate(valid => {
+        if (valid) {
+          this.loading = true
+          register(this.registerForm).then(() => {
+            this.$message.success('注册成功，请登录')
+            this.toggleRegister()
+            this.loading = false
+          }).catch(() => {
+            this.loading = false
+          })
         }
       })
     }
