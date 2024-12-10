@@ -3,7 +3,7 @@
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
 
       <div class="title-container">
-        <h3 class="title">Login Form</h3>
+        <h3 class="title">欢迎登录电子相册</h3>
       </div>
 
       <el-form-item prop="username">
@@ -60,14 +60,14 @@ export default {
   data() {
     const validateUsername = (rule, value, callback) => {
       if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
+        callback(new Error('请输入正确的用户名'))
       } else {
         callback()
       }
     }
     const validatePassword = (rule, value, callback) => {
       if (value.length < 6) {
-        callback(new Error('The password can not be less than 6 digits'))
+        callback(new Error('密码不得少于6位'))
       } else {
         callback()
       }
@@ -164,8 +164,8 @@ $cursor: #fff;
   }
 
   .el-form-item {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    background: rgba(131, 145, 145, 0.43);
     border-radius: 5px;
     color: #454545;
   }
@@ -173,16 +173,16 @@ $cursor: #fff;
 </style>
 
 <style lang="scss" scoped>
-$bg:#2d3a4b;
-$dark_gray:#889aa4;
-$light_gray: #707070;
+$bg: #005bdc;
+$dark_gray: #000405;
+$light_gray: #000000;
 
 .login-container {
   min-height: 100%;
   width: 100%;
   background-color: $bg;
   overflow: hidden;
-  background-image: url(../../assets/bg.jpg); //背景图
+  background-image:  linear-gradient(45deg, #b2eef6, #6278f6);// url(../../assets/bg.jpg); //背景图
   background-size: 100%;
   display: flex;
   align-items: center;
@@ -194,14 +194,14 @@ $light_gray: #707070;
     padding: 30px 35px 0;
     margin: 0 auto;
     overflow: hidden;
-    background-color: #bfc0c2;  // 背景颜色
+    background-color: rgba(243, 243, 243, 0.76);  // 背景颜色
     border-radius: 5px;             // 表单圆角
     opacity: 0.35;                  // 透明度，值越小越越透明，取值为[0,1]
   }
 
   .tips {
     font-size: 14px;
-    color: #f5f4f4;
+    color: #7631fd;
     margin-bottom: 10px;
 
     span {
