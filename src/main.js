@@ -14,6 +14,8 @@ import router from './router'
 
 import '@/icons' // icon
 import '@/permission' // permission control
+import '@fortawesome/fontawesome-free/css/all.css';
+import '@fortawesome/fontawesome-free/js/all.js';
 
 /**
  * If you don't want to use mock-server
