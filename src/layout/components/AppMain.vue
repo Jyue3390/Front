@@ -19,12 +19,12 @@ export default {
 
 <style scoped>
 .app-main {
-  /*50 = navbar  */
-  min-height: calc(100vh - 50px);
-  width: 100%;
-  position: relative;
-  overflow: hidden;
+  height: calc(100vh - 50px); /* 全屏高度减去导航栏高度 */
+  overflow: hidden; /* 禁止主内容滚动 */
+  display: flex; /* 使用 Flex 布局，方便容器分配空间 */
+  flex-direction: column;
 }
+
 .fixed-header+.app-main {
   padding-top: 50px;
 }

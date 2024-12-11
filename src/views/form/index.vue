@@ -1,20 +1,23 @@
 <template>
   <div class="home">
-    <h1>欢迎来到首页</h1>
+    <div class="header">
+      <!-- Magnifying Glass Icon -->
+      <div class="search-icon" @click="toggleSearchBox">
+        <i class="fas fa-search" />
+      </div>
 
-    <!-- Magnifying Glass Icon -->
-    <div class="search-icon" @click="toggleSearchBox">
-      <i class="fas fa-search" />
-    </div>
+      <!-- Title centered -->
+      <h1 class="page-title">欢迎来到广场</h1>
 
-    <!-- Search Box -->
-    <div v-if="showSearchBox" class="search-box">
-      <input
-        v-model="searchTerm"
-        type="text"
-        placeholder="搜索图片"
-        @input="filterImages"
-      >
+      <!-- Search Box -->
+      <div v-if="showSearchBox" class="search-box">
+        <input
+          v-model="searchTerm"
+          type="text"
+          placeholder="搜索图片"
+          @input="filterImages"
+        />
+      </div>
     </div>
 
     <!-- Image Grid -->
@@ -26,7 +29,7 @@
         class="image-item"
       >
         <div class="image">
-          <img :src="image.src" alt="图片">
+          <img :src="image.src" alt="图片" />
           <div class="image-content">
             <h1>{{ image.title }}</h1>
             <div class="icons">
@@ -91,34 +94,49 @@ export default {
 
 <style scoped>
 /* Home layout styles */
-.home {
+html, body {
   padding: 20px;
   background-color: #f0f0f0;
+  height: auto; /* 高度动态变化 */
+  overflow: hidden;
+}
+
+.home {
+  padding: 0px;
+  background-color: #f0f0f0;
   height: 100vh;
+  overflow: auto; /* 保留垂直滚动 */
+  -ms-overflow-style: none; /* IE 和 Edge 隐藏滚动条 */
+  scrollbar-width: none; /* Firefox 隐藏滚动条 */
+}
+
+/* Header layout with search icon on the left and title centered */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   position: relative;
-  /* 移除滚动条样式 */
-  overflow: unset;
 }
 
-.home::-webkit-scrollbar {
-  display: none; /* 去掉滚动条 */
-}
-
-/* Magnifying glass icon */
 .search-icon {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  cursor: pointer;
   font-size: 24px;
-  color: #333;
+  cursor: pointer;
+  position: absolute;
+  left: 20px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 35px;
+  text-align: center;
+  flex-grow: 1;
 }
 
 /* Search Box Styles */
 .search-box {
   position: absolute;
-  top: 20px;
-  left: 60px;
+  top: 0px;
+  left: 50px;
   background-color: #fff;
   padding: 10px;
   border-radius: 5px;
@@ -128,7 +146,7 @@ export default {
 
 .search-box input {
   width: 100%;
-  padding: 5px;
+  padding: 0px;
   font-size: 16px;
 }
 
@@ -146,43 +164,16 @@ export default {
   display: grid;
   grid-template-columns: repeat(3, 1fr); /* 三列布局 */
   gap: 10px;
+  /* max-height: calc(100vh - 100px); 限制最大高度避免溢出 */
+  overflow: hidden; /* 禁用滚动条 */
 }
 
-/* 鼠标悬停时显示滚动条 */
-.home:hover {
-  overflow-y: auto; /* 恢复滚动功能 */
-}
-
-/* 滚动条样式 */
-.home::-webkit-scrollbar {
-  width: 8px; /* 滚动条宽度 */
-  background: transparent; /* 默认背景透明 */
-}
-
-.home:hover::-webkit-scrollbar {
-  background: #e0e0e0; /* 鼠标悬停时显示背景 */
-}
-
-.home::-webkit-scrollbar-thumb {
-  background: #888; /* 滑块颜色 */
-  border-radius: 4px;
-}
-
-.home:hover::-webkit-scrollbar-thumb {
-  background: #555; /* 鼠标悬停时滑块颜色 */
-}
-
-h1 {
-  text-align: center;
-  color: #333;
-}
-
+/* Image item styles */
 .image-item {
   overflow: hidden;
   cursor: pointer;
 }
 
-/* Image hover effect styles */
 .image {
   position: relative;
   width: 100%;

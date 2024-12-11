@@ -7,7 +7,8 @@
     <div class="right-menu">
       <el-dropdown class="avatar-container" trigger="click">
         <div class="avatar-wrapper">
-          <img :src="avatar+'?imageView2/1/w/80/h/80'" class="user-avatar">
+          <!-- 使用本地图片 -->
+          <img :src="avatarImage" class="user-avatar" />
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown" class="user-dropdown">
@@ -16,10 +17,10 @@
               Home
             </el-dropdown-item>
           </router-link>
-          <a target="_blank" href="https://github.com/PanJiaChen/vue-admin-template/">
+          <a target="_blank" href="https://github.com/Jyue3390">
             <el-dropdown-item>Github</el-dropdown-item>
           </a>
-          <a target="_blank" href="https://panjiachen.github.io/vue-element-admin-site/#/">
+          <a target="_blank" href="https://github.com/Jyue3390/Front">
             <el-dropdown-item>Docs</el-dropdown-item>
           </a>
           <el-dropdown-item divided @click.native="logout">
@@ -36,10 +37,18 @@ import { mapGetters } from 'vuex'
 import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
 
+// 引入本地图片
+import avatarImage from '@/assets/jbq.gif'
+
 export default {
   components: {
     Breadcrumb,
     Hamburger
+  },
+  data() {
+    return {
+      avatarImage // 将图片路径绑定到 data 中
+    }
   },
   computed: {
     ...mapGetters([
