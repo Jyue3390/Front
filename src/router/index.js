@@ -67,7 +67,30 @@ export const constantRoutes = [
       }
     ]
   },
-
+  {
+    path: '/comment',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'Comment',
+        component: () => import('@/views/manage/comment/index.vue'),
+        meta: { title: 'Comment', icon: 'tree' }
+      }
+    ]
+  },
+  {
+    path: '/image',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'Image',
+        component: () => import('@/views/manage/image/index.vue'),
+        meta: { title: 'Image', icon: 'table' }
+      }
+    ]
+  },
   {
     path: 'external-link',
     component: Layout,

@@ -127,9 +127,9 @@ export default {
             // 根据角色重定向
             const role = this.$store.state.user.role
             if (role === 'admin') {
-              this.$router.push('/')
+              this.$router.push('/comment')
             } else if (role === 'editor') {
-              this.$router.push('/form')
+              this.$router.push('/')
             }
             this.loading = false
           }).catch(() => {
