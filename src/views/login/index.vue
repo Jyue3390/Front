@@ -124,7 +124,13 @@ export default {
         if (valid) {
           this.loading = true
           this.$store.dispatch('user/login', this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
+            // 根据角色重定向
+            const role = this.$store.state.user.role
+            if (role === 'admin') {
+              this.$router.push('/admin/dashboard')
+            } else if (role === 'editor') {
+              this.$router.push('/editor/dashboard')
+            }
             this.loading = false
           }).catch(() => {
             this.loading = false
@@ -139,7 +145,7 @@ export default {
       this.$refs.registerForm.validate(valid => {
         if (valid) {
           this.loading = true
-          register(this.registerForm).then(() => {
+          register({ ...this.registerForm, role: 'editor' }).then(() => {
             this.$message.success('注册成功，请登录')
             this.toggleRegister()
             this.loading = false

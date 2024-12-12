@@ -44,127 +44,73 @@ export const constantRoutes = [
   },
 
   {
-    path: '/',
+    path: '/admin',
     component: Layout,
-    redirect: '/dashboard',
-    children: [{
-      path: 'dashboard',
-      name: 'Dashboard',
-      component: () => import('@/views/dashboard/index'),
-      meta: { title: 'Dashboard', icon: 'dashboard' }
-    }]
+    redirect: '/admin/dashboard',
+    name: 'Admin',
+    meta: { roles: ['admin'], title: 'Admin', icon: 'admin' },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/views/admin/dashboard/index'),
+        meta: { title: 'Dashboard', icon: 'dashboard' }
+      }
+    ]
   },
 
   {
-    path: '/example',
+    path: '/editor',
     component: Layout,
-    redirect: '/example/table',
-    name: 'Example',
-    meta: { title: 'Example', icon: 'el-icon-s-help' },
+    redirect: '/editor/dashboard',
+    name: 'Editor',
+    meta: { roles: ['editor'], title: 'Editor', icon: 'editor' },
     children: [
       {
-        path: 'table',
-        name: 'Table',
-        component: () => import('@/views/table/index'),
-        meta: { title: 'Table', icon: 'table' }
+        path: 'dashboard',
+        name: 'EditorDashboard',
+        component: () => import('@/views/editor/dashboard/index'),
+        meta: { title: 'Dashboard', icon: 'dashboard' }
       },
-      {
-        path: 'tree',
-        name: 'Tree',
-        component: () => import('@/views/tree/index'),
-        meta: { title: 'Tree', icon: 'tree' }
-      }
-    ]
-  },
 
-  {
-    path: '/form',
-    component: Layout,
-    children: [
       {
-        path: 'index',
-        name: 'Form',
-        component: () => import('@/views/form/index'),
-        meta: { title: 'Form', icon: 'form' }
-      }
-    ]
-  },
-
-  {
-    path: '/nested',
-    component: Layout,
-    redirect: '/nested/menu1',
-    name: 'Nested',
-    meta: {
-      title: 'Nested',
-      icon: 'nested'
-    },
-    children: [
-      {
-        path: 'menu1',
-        component: () => import('@/views/nested/menu1/index'), // Parent router-view
-        name: 'Menu1',
-        meta: { title: 'Menu1' },
+        path: '/form',
+        component: Layout,
         children: [
           {
-            path: 'menu1-1',
-            component: () => import('@/views/nested/menu1/menu1-1'),
-            name: 'Menu1-1',
-            meta: { title: 'Menu1-1' }
-          },
-          {
-            path: 'menu1-2',
-            component: () => import('@/views/nested/menu1/menu1-2'),
-            name: 'Menu1-2',
-            meta: { title: 'Menu1-2' },
-            children: [
-              {
-                path: 'menu1-2-1',
-                component: () => import('@/views/nested/menu1/menu1-2/menu1-2-1'),
-                name: 'Menu1-2-1',
-                meta: { title: 'Menu1-2-1' }
-              },
-              {
-                path: 'menu1-2-2',
-                component: () => import('@/views/nested/menu1/menu1-2/menu1-2-2'),
-                name: 'Menu1-2-2',
-                meta: { title: 'Menu1-2-2' }
-              }
-            ]
-          },
-          {
-            path: 'menu1-3',
-            component: () => import('@/views/nested/menu1/menu1-3'),
-            name: 'Menu1-3',
-            meta: { title: 'Menu1-3' }
+            path: 'index',
+            name: 'Form',
+            component: () => import('@/views/editor/form/index'),
+            meta: { title: 'Form', icon: 'form' }
           }
         ]
       },
+
       {
-        path: 'menu2',
-        component: () => import('@/views/nested/menu2/index'),
-        name: 'Menu2',
-        meta: { title: 'menu2' }
+        path: 'external-link',
+        component: Layout,
+        children: [
+          {
+            path: 'https://github.com/Jyue3390/Front',
+            meta: { title: 'External Link', icon: 'link' }
+          }
+        ]
+      },
+
+      {
+        path: 'album',
+        component: Layout,
+        children: [
+          {
+            path: ':albumId',
+            name: 'AlbumDetail',
+            component: () => import('@/views/editor/album/AlbumDetail.vue'),
+            meta: { title: 'Album Detail', icon: 'album' }
+          }
+        ],
+        hidden: true // 隐藏在侧边栏中
       }
     ]
-  },
-
-  {
-    path: 'external-link',
-    component: Layout,
-    children: [
-      {
-        path: 'https://github.com/Jyue3390/Front',
-        meta: { title: 'External Link', icon: 'link' }
-      }
-    ]
-  },
-
-  {
-    path: '/album/:albumId',
-    component: () => import('@/views/album/AlbumDetail.vue'),
-    name: 'AlbumDetail',
-    hidden: true // 隐藏在侧边栏中
   },
 
   // 404 page must be placed at the end !!!
@@ -185,4 +131,18 @@ export function resetRouter() {
   router.matcher = newRouter.matcher // reset router
 }
 
+import store from '@/store' // 确保路径正确，@ 通常是别名指向 src
+router.beforeEach((to, from, next) => {
+  const roles = store.getters.roles // 使用Vuex中存储的角色信息
+  const roleAuth = to.meta.roles
+  if (roleAuth && roleAuth.length > 0) {
+    if (roleAuth.some(role => roles.includes(role))) {
+      next()
+    } else {
+      next('/404') // 没有权限，重定向到404页面
+    }
+  } else {
+    next() // 公共路由，不需要角色验证
+  }
+})
 export default router

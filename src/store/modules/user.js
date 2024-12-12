@@ -6,7 +6,8 @@ const getDefaultState = () => {
   return {
     token: getToken(),
     name: '',
-    avatar: ''
+    avatar: '',
+    role: '' // 添加role属性
   }
 }
 
@@ -14,7 +15,7 @@ const state = getDefaultState()
 
 const mutations = {
   RESET_STATE: (state) => {
-    Object.assign(state, getDefaultState())
+    Object.assign(state, getDefaultState()) // 重置state时也重置role
   },
   SET_TOKEN: (state, token) => {
     state.token = token
@@ -24,6 +25,9 @@ const mutations = {
   },
   SET_AVATAR: (state, avatar) => {
     state.avatar = avatar
+  },
+  SET_ROLE: (state, role) => { // 添加设置role的mutation
+    state.role = role
   }
 }
 
@@ -35,8 +39,13 @@ const actions = {
       login({ username: username.trim(), password: password }).then(response => {
         const { data } = response
         commit('SET_TOKEN', data.token)
+        commit('SET_ROLE', data.role) // 提取并设置role
         setToken(data.token)
-        resolve()
+        if (data.role === 'admin') {
+          return this.$router.push('/admin/dashboard')
+        } else if (data.role === 'editor') {
+          return this.$router.push('/editor/dashboard')
+        }
       }).catch(error => {
         reject(error)
       })
@@ -53,10 +62,11 @@ const actions = {
           return reject('Verification failed, please Login again.')
         }
 
-        const { name, avatar } = data
+        const { name, avatar, role } = data // 提取role
 
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
+        commit('SET_ROLE', role) // 设置role
         resolve(data)
       }).catch(error => {
         reject(error)
@@ -68,7 +78,7 @@ const actions = {
   logout({ commit, state }) {
     return new Promise((resolve, reject) => {
       logout(state.token).then(() => {
-        removeToken() // must remove  token  first
+        removeToken() // must remove token first
         resetRouter()
         commit('RESET_STATE')
         resolve()
@@ -81,7 +91,7 @@ const actions = {
   // remove token
   resetToken({ commit }) {
     return new Promise(resolve => {
-      removeToken() // must remove  token  first
+      removeToken() // must remove token first
       commit('RESET_STATE')
       resolve()
     })
@@ -94,4 +104,3 @@ export default {
   mutations,
   actions
 }
-
