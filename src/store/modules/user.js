@@ -41,11 +41,13 @@ const actions = {
         commit('SET_TOKEN', data.token)
         commit('SET_ROLE', data.role) // 提取并设置role
         setToken(data.token)
-        if (data.role === 'admin') {
-          return this.$router.push('/admin/dashboard')
-        } else if (data.role === 'editor') {
-          return this.$router.push('/editor/dashboard')
-        }
+        // if (data.role === 'admin') {
+        //   return this.$router.push('/dashboard')
+        // } else if (data.role === 'editor') {
+        //   return this.$router.push('/form')
+        // }
+        // this.$router.push('/')
+        resolve()
       }).catch(error => {
         reject(error)
       })

@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard-container">
     <!-- Dashboard Section -->
-    <div class="dashboard-text">name: {{ name }}</div>
+    <div class="dashboard-text">name: {{ name }}  role:{{ role }}</div>
 
     <!-- Profile Section -->
     <div class="profile">
@@ -53,7 +53,8 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'name' // 从 Vuex 获取用户名称
+      'name',
+      'role'// 从 Vuex 获取用户名称
     ])
   },
   created() {

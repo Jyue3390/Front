@@ -127,9 +127,9 @@ export default {
             // 根据角色重定向
             const role = this.$store.state.user.role
             if (role === 'admin') {
-              this.$router.push('/admin/dashboard')
+              this.$router.push('/')
             } else if (role === 'editor') {
-              this.$router.push('/editor/dashboard')
+              this.$router.push('/form')
             }
             this.loading = false
           }).catch(() => {
@@ -145,7 +145,7 @@ export default {
       this.$refs.registerForm.validate(valid => {
         if (valid) {
           this.loading = true
-          register({ ...this.registerForm, role: 'editor' }).then(() => {
+          register(this.registerForm).then(() => {
             this.$message.success('注册成功，请登录')
             this.toggleRegister()
             this.loading = false
