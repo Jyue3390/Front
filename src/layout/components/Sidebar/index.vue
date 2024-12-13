@@ -1,5 +1,5 @@
 <template>
-  <div :class="{'has-logo':showLogo}">
+  <div :class="{'has-logo': showLogo}">
     <logo v-if="showLogo" :collapse="isCollapse" />
     <el-scrollbar wrap-class="scrollbar-wrapper">
       <el-menu
@@ -12,7 +12,12 @@
         :collapse-transition="false"
         mode="vertical"
       >
-        <sidebar-item v-for="route in routes" :key="route.path" :item="route" :base-path="route.path" />
+        <sidebar-item
+          v-for="route in filteredRoutes"
+          :key="route.path"
+          :item="route"
+          :base-path="route.path"
+        />
       </el-menu>
     </el-scrollbar>
   </div>
@@ -27,20 +32,27 @@ import variables from '@/styles/variables.scss'
 export default {
   components: { SidebarItem, Logo },
   computed: {
-    ...mapGetters([
-      'sidebar'
-    ]),
-    routes() {
-      return this.$router.options.routes
+    ...mapGetters(['sidebar', 'role']), // 获取用户角色
+    // 过滤出根据角色显示的路由
+    filteredRoutes() {
+      const allRoutes = this.$router.options.routes
+      if (this.role === 'admin') {
+        // admin 看到所有路由
+        return allRoutes.filter(route =>
+          route.path === '/' || route.path === '/comment' || route.path === '/image' || route.path === 'external-link'
+        )
+      } else if (this.role === 'editor') {
+        // editor 只看到 dashboard 和 form
+        return allRoutes.filter(route =>
+          route.path === '/' || route.path === '/mine' || route.path === '/form' || route.path === 'external-link'
+        )
+      }
+      return []
     },
     activeMenu() {
       const route = this.$route
       const { meta, path } = route
-      // if set path, the sidebar will highlight the path you set
-      if (meta.activeMenu) {
-        return meta.activeMenu
-      }
-      return path
+      return meta.activeMenu || path
     },
     showLogo() {
       return this.$store.state.settings.sidebarLogo

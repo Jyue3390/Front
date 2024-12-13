@@ -54,7 +54,18 @@ export const constantRoutes = [
       meta: { title: 'Dashboard', icon: 'dashboard' }
     }]
   },
-
+  {
+    path: '/mine',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'Mine',
+        component: () => import('@/views/mine/index.vue'),
+        meta: { title: 'Mine', icon: 'nested' }
+      }
+    ]
+  },
   {
     path: '/form',
     component: Layout,

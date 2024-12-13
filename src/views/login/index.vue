@@ -125,12 +125,13 @@ export default {
           this.loading = true
           this.$store.dispatch('user/login', this.loginForm).then(() => {
             // 根据角色重定向
-            const role = this.$store.state.user.role
-            if (role === 'admin') {
-              this.$router.push('/')
-            } else if (role === 'editor') {
-              this.$router.push('/form')
-            }
+            // const role = this.$store.state.user.role
+            // if (role === 'admin') {
+            //   this.$router.push('/')
+            // } else if (role === 'editor') {
+            //   this.$router.push('/')
+            // }
+            this.$router.push('/')
             this.loading = false
           }).catch(() => {
             this.loading = false
