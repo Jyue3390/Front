@@ -7,6 +7,7 @@ const getDefaultState = () => {
     token: getToken(),
     name: '',
     avatar: '',
+    id: '',
     role: '' // 添加role属性
   }
 }
