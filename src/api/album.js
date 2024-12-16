@@ -11,24 +11,16 @@ export function fetchAlbumList(userId) {
 }
 
 // 创建新相册
-// export function createAlbum(data) {
-//   const userId = getToken()?.userId // 从登录信息中获取 userId
-//   return request({
-//     url: '/album/create',
-//     method: 'post',
-//     data: {
-//       ...data,
-//       ownerId: userId // 动态添加 ownerId
-//     }
-//   })
-// }
-
 export function createAlbum(data) {
+  const userId = getToken()?.userId // 从登录信息中获取 userId
   return request({
     url: '/album/create',
     method: 'post',
-    data,
-  });
+    data: {
+      ...data,
+      ownerId: userId // 动态添加 ownerId
+    }
+  })
 }
 
 // 添加图片到相册

@@ -29,6 +29,9 @@ const mutations = {
   },
   SET_ROLE: (state, role) => { // 添加设置role的mutation
     state.role = role
+  },
+  SET_ID: (state, id) => { // 添加设置role的mutation
+    state.id = id
   }
 }
 
@@ -65,8 +68,8 @@ const actions = {
           return reject('Verification failed, please Login again.')
         }
 
-        const { name, avatar, role } = data // 提取role
-
+        const { name, avatar, role, id } = data // 提取role
+        commit('SET_ID', id)
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
         commit('SET_ROLE', role) // 设置role

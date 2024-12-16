@@ -1,7 +1,7 @@
 <template>
   <div class="mine-container">
     <!-- mine Section -->
-    <div class="mine-text">name: {{ name }}  role:{{ role }}</div>
+    <div class="mine-text">name: {{ name }}  role:{{ role }}  id:{{ id }}</div>
 
     <!-- Profile Section -->
     <div class="profile">
@@ -28,10 +28,7 @@
         <div class="modal-content">
           <h2>创建新相册</h2>
           <input v-model="newAlbum.name" type="text" placeholder="相册名称">
-          <textarea v-model="newAlbum.description" placeholder="相册描述" />
-          <label>
-            <input v-model="newAlbum.isPrivate" type="checkbox"> 私密相册
-          </label>
+          <input v-model="newAlbum.description" type="text" placeholder="相册类型">
           <div class="button-container">
             <button class="save-btn" @click="saveAlbum">保存</button>
             <button class="cancel-btn" @click="cancelAlbum">取消</button>
@@ -53,7 +50,7 @@ export default {
     return {
       albums: [], // 存储相册数据
       showNewAlbumForm: false, // 控制新建相册表单显示
-      newAlbum: { name: '', description: '', isPrivate: false, ownerId: user.id } // 新建相册的数据
+      newAlbum: { name: '', description: '', coverImage: '', images: [] } // 新建相册的数据
     }
   },
   computed: {
@@ -74,21 +71,20 @@ export default {
     },
     // 保存新建的相册
     saveAlbum() {
-      if (this.newAlbum.name) {
+      if (this.newAlbum.name && this.newAlbum.description) {
         const albumData = {
           name: this.newAlbum.name,
           description: this.newAlbum.description,
-          isPrivate: this.newAlbum.isPrivate,
-          ownerId: this.newAlbum.ownerId
+          ownerID: user.id
         }
 
-        createAlbum(albumData)
+        createAlbum(albumData) // 调用后端 API 创建相册
           .then(response => {
             if (response.code === 20000) {
-              this.$message.success(response.message)
-              this.newAlbum = { name: '', description: '', isPrivate: false } // 重置表单
-              this.showNewAlbumForm = false // 关闭表单
-              this.loadUserAlbums() // 刷新相册列表
+              this.$message.success(response.message) // 显示成功提示
+              // this.albums.push(response.data) // 更新前端相册列表
+              // this.newAlbum = { name: '', description: '', coverImage: '', images: [] } // 重置新相册数据
+              // this.showNewAlbumForm = false // 关闭表单
             } else {
               alert('创建相册失败')
             }
@@ -98,7 +94,7 @@ export default {
             alert('创建相册失败，请稍后再试')
           })
       } else {
-        alert('请填写相册名称')
+        alert('请填写相册名称和类型')
       }
     },
     // 取消新建相册表单
@@ -107,8 +103,8 @@ export default {
     },
     // 获取用户的相册列表
     loadUserAlbums() {
-      // const ownerId = 1 // 假设是当前用户的ID，可以从 Vuex 或用户认证中获取
-      getUserAlbums(user.id)
+      const ownerId = user.id // 假设是当前用户的ID，可以从 Vuex 或用户认证中获取
+      getUserAlbums(ownerId)
         .then(response => {
           if (response.code === 200) {
             this.albums = response.data // 获取并显示用户相册列表
