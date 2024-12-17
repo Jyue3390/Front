@@ -1,29 +1,29 @@
 <template>
   <div class="home">
+    <!-- Header -->
     <div class="header">
-      <!-- Title centered -->
       <h1 class="page-title">欢迎来到广场</h1>
     </div>
 
     <!-- Image Grid -->
     <div class="image-grid">
-<!--      <div-->
-<!--        v-for="(image, index) in images"-->
-<!--        v-if="images.length > 0"-->
-<!--        :key="index"-->
-<!--        class="image-item"-->
-<!--        @click="openImageModal(image)"-->
-<!--      >-->
-<!--        <div class="photo">-->
-<!--          <img :src="image.url" :alt="image.name" class="photo-img">-->
-<!--        </div>-->
-<!--      </div>-->
-      <div class="photo" v-for="photo in images" :key="photo.id" @click="openImageModal(photo)">
-        <img :src="photo.url" :alt="photo.name" class="photo-img" />
+      <div
+        v-for="photo in images"
+        :key="photo.id"
+        class="photo"
+        @click="openImageModal(photo)"
+      >
+        <div class="image-container">
+          <img :src="photo.url" :alt="photo.name" class="photo-img">
+          <div class="image-overlay">
+            <div class="icons">
+              <a href="#" class="icon fas fa-heart" @click.prevent="toggleLike(photo)" />
+              <a href="#" class="icon fas fa-comment" @click.prevent="selectImage(photo)" />
+              <a href="#" class="icon fas fa-share" />
+            </div>
+          </div>
+        </div>
       </div>
-<!--      <div v-else class="no-content">-->
-<!--        <p>无相关内容</p>-->
-<!--      </div>-->
     </div>
   </div>
 </template>
@@ -41,15 +41,15 @@ export default {
     }
   },
   async created() {
-    await this.fetchPhotos() // 在组件创建时获取照片数据
+    await this.fetchPhotos() // 获取照片数据
   },
   methods: {
     // 从后端获取照片
     async fetchPhotos() {
       try {
-        const response = await fetchPublicPhotos() // 调用 API 方法获取公开照片
+        const response = await fetchPublicPhotos()
         if (response.code === 20000) {
-          this.images = response.data// .photos
+          this.images = response.data
         } else {
           this.$message.error('无法加载照片')
         }
@@ -57,6 +57,21 @@ export default {
         console.error('获取照片时出错:', error)
         this.$message.error('加载照片失败')
       }
+    },
+    toggleLike(photo) {
+      photo.liked = !photo.liked
+      if (photo.liked) {
+        alert('您已点赞')
+      } else {
+        alert('您已取消点赞')
+      }
+    },
+    selectImage(photo) {
+      this.$emit('select-image', photo)
+    },
+    openImageModal(photo) {
+      this.currentImage = photo
+      this.isModalVisible = true
     }
   }
 }
@@ -79,28 +94,126 @@ export default {
 
 .image-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 三列布局 */
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
-.image-item {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  text-align: center;
+.photo {
   cursor: pointer;
+}
+
+.image-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
 }
 
 .photo-img {
   max-width: 100%;
   height: auto;
-  border-radius: 4px;
+  transition: transform 0.3s ease;
 }
 
-.no-content {
-  color: #888;
-  font-size: 16px;
+.photo:hover .photo-img {
+  transform: scale(1.05); /* 图片放大效果 */
 }
 
+.image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  transform: translateY(100%); /* 初始时遮罩位于图片下方 */
+  transition: transform 0.3s ease;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.photo:hover .image-overlay {
+  transform: translateY(0); /* 鼠标悬停时遮罩从下方滑出 */
+}
+
+.icons {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.icon {
+  color: white;
+  font-size: 20px;
+  margin: 0 10px;
+  transition: color 0.3s ease;
+}
+
+.icon:hover {
+  color: #3498db; /* 鼠标悬停时图标颜色变化 */
+}
+
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 54px;
+  width: calc(100% - 54px);
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  width: 90%;
+  height: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.prev-btn, .next-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 24px;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.prev-btn {
+  left: 10px;
+}
+
+.next-btn {
+  right: 10px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  background: transparent;
+  color: white;
+  font-size: 30px;
+  border: none;
+  cursor: pointer;
+  z-index: 20;
+}
+
+.close-btn:hover {
+  color: #ff4d4d;
+}
 </style>
