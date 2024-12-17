@@ -16,10 +16,11 @@
           class="album-item"
           @click="goToAlbumDetail(album.id)"
         >
-          <div class="album-cover">
-            <img :src="album.coverImage || (album.images.length > 0 ? album.images[0] : '/img/placeholder.jpg')" alt="Album Cover">
+          <div class="album-content">
+            <h3>{{ album.name }}</h3>
+            <span v-if="album.isPrivate" class="private-tag">隐私相册</span>
+            <span v-else class="public-tag">公开相册</span>
           </div>
-          <h3>{{ album.name }}</h3>
         </div>
       </div>
 
@@ -28,7 +29,14 @@
         <div class="modal-content">
           <h2>创建新相册</h2>
           <input v-model="newAlbum.name" type="text" placeholder="相册名称">
-          <input v-model="newAlbum.description" type="text" placeholder="相册类型">
+          <input v-model="newAlbum.description" type="text" placeholder="相册描述">
+          <!-- 隐私相册选项 -->
+          <div class="privacy-option">
+            <label>
+              <input v-model="newAlbum.isPrivate" type="checkbox">
+              设为隐私相册
+            </label>
+          </div>
           <div class="button-container">
             <button class="save-btn" @click="saveAlbum">保存</button>
             <button class="cancel-btn" @click="cancelAlbum">取消</button>
@@ -41,8 +49,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { createAlbum, getUserAlbums } from '@/api/album'
-import user from '@/store/modules/user' // 导入后端 API
+import { createAlbum, fetchAlbumList } from '@/api/album'
 
 export default {
   name: 'Mine',
@@ -50,7 +57,7 @@ export default {
     return {
       albums: [], // 存储相册数据
       showNewAlbumForm: false, // 控制新建相册表单显示
-      newAlbum: { name: '', description: '', coverImage: '', images: [] } // 新建相册的数据
+      newAlbum: { name: '', description: '', isPrivate: false } // 新建相册的数据
     }
   },
   computed: {
@@ -65,6 +72,21 @@ export default {
     this.loadUserAlbums()
   },
   methods: {
+    // 加载用户相册列表
+    loadUserAlbums() {
+      fetchAlbumList(this.id) // 获取用户ID
+        .then(response => {
+          if (response.code === 20000) {
+            this.albums = response.data // 将返回的相册数据存储到 albums 数组
+          } else {
+            alert('无法加载相册列表')
+          }
+        })
+        .catch(error => {
+          console.error('Error loading albums:', error)
+          alert('无法加载相册列表，请稍后再试')
+        })
+    },
     // 创建相册按钮
     createAlbum() {
       this.showNewAlbumForm = true
@@ -75,51 +97,36 @@ export default {
         const albumData = {
           name: this.newAlbum.name,
           description: this.newAlbum.description,
-          ownerID: user.id
+          isPrivate: this.newAlbum.isPrivate,
+          ownerId: this.id // Use Vuex user ID here
         }
 
         createAlbum(albumData) // 调用后端 API 创建相册
           .then(response => {
             if (response.code === 20000) {
-              this.$message.success(response.message) // 显示成功提示
-              // this.albums.push(response.data) // 更新前端相册列表
-              // this.newAlbum = { name: '', description: '', coverImage: '', images: [] } // 重置新相册数据
-              // this.showNewAlbumForm = false // 关闭表单
+              this.$message.success('相册创建成功') // 成功提示
+              this.albums.push(response.data) // 将新相册添加到 albums 数组
+              this.showNewAlbumForm = false // 关闭表单
+              this.newAlbum = { name: '', description: '', isPrivate: false } // 重置表单
             } else {
-              alert('创建相册失败')
+              this.$message.error('创建相册失败，请稍后再试')
             }
           })
           .catch(error => {
             console.error('Error creating album:', error)
-            alert('创建相册失败，请稍后再试')
+            this.$message.error('创建相册失败，请稍后再试')
           })
       } else {
-        alert('请填写相册名称和类型')
+        this.$message.warning('请填写相册名称和描述')
       }
     },
     // 取消新建相册表单
     cancelAlbum() {
       this.showNewAlbumForm = false
     },
-    // 获取用户的相册列表
-    loadUserAlbums() {
-      const ownerId = user.id // 假设是当前用户的ID，可以从 Vuex 或用户认证中获取
-      getUserAlbums(ownerId)
-        .then(response => {
-          if (response.code === 200) {
-            this.albums = response.data // 获取并显示用户相册列表
-          } else {
-            alert('无法加载相册列表')
-          }
-        })
-        .catch(error => {
-          console.error('Error loading albums:', error)
-          alert('无法加载相册列表，请稍后再试')
-        })
-    },
     // 跳转到相册详情页
     goToAlbumDetail(albumId) {
-      this.$router.push(`/album/${albumId}`)
+      this.$router.push({ name: 'AlbumDetail', query: { albumId: albumId }})
     }
   }
 }
@@ -132,6 +139,17 @@ export default {
   overflow: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+.private-tag {
+  color: red;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.public-tag {
+  color: green;
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 .mine-text {
@@ -177,25 +195,25 @@ export default {
 
 .album-item {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 150px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  transition: box-shadow 0.3s ease;
   cursor: pointer;
 }
 
-.album-cover {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
+.album-item:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.album-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-h3 {
-  text-align: center;
-  color: #0E0101FF;
+.album-content {
+  font-size: 1.1rem;
+  color: #333;
 }
 
 .modal-overlay {

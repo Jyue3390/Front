@@ -6,23 +6,29 @@ export function fetchAlbumList(userId) {
   return request({
     url: '/album/list',
     method: 'get',
-    params: { userId } // 将用户ID传递给后端
+    params: { ownerId: userId } // 将用户ID传递给后端
   })
 }
 
 // 创建新相册
 export function createAlbum(data) {
-  const userId = getToken()?.userId // 从登录信息中获取 userId
+  // const userId = getToken()?.userId // 从登录信息中获取 userId
   return request({
     url: '/album/create',
     method: 'post',
     data: {
-      ...data,
-      ownerId: userId // 动态添加 ownerId
+      ...data// ,// ownerId: userId // 动态添加 ownerId
     }
   })
 }
-
+// 获取相册详情
+export function fetchAlbumDetails(albumId) {
+  return request({
+    url: '/album/detail',
+    method: 'get',
+    params: { albumId } // 将相册 ID 传递给后端
+  })
+}
 // 添加图片到相册
 export function addPhotoToAlbum(data) {
   return request({
