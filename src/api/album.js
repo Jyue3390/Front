@@ -17,10 +17,11 @@ export function createAlbum(data) {
     url: '/album/create',
     method: 'post',
     data: {
-      ...data// ,// ownerId: userId // 动态添加 ownerId
+      ...data // 动态添加 ownerId
     }
   })
 }
+
 // 获取相册详情
 export function fetchAlbumDetails(albumId) {
   return request({
@@ -29,15 +30,23 @@ export function fetchAlbumDetails(albumId) {
     params: { albumId } // 将相册 ID 传递给后端
   })
 }
-// 添加图片到相册
-export function addPhotoToAlbum(data) {
+
+// 上传照片到相册
+export function uploadPhoto(albumId, file) {
+  const formData = new FormData() // 创建一个 FormData 对象
+  formData.append('albumId', albumId) // 添加相册 ID
+  formData.append('file', file) // 添加文件
+
   return request({
-    url: '/album/addPhoto',
+    url: '/album/upload-photo',
     method: 'post',
-    data // 包含相册ID和图片信息
+    headers: {
+      'Content-Type': 'multipart/form-data' // 设置为 multipart/form-data 以处理文件上传
+    },
+    data: formData, // 传递 FormData 对象
+    timeout: 100000
   })
 }
-
 // 删除相册中的图片
 export function deletePhotoFromAlbum(photoId) {
   return request({
