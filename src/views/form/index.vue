@@ -1,91 +1,61 @@
 <template>
   <div class="home">
     <div class="header">
-      <!-- Magnifying Glass Icon -->
-      <div class="search-icon" @click="toggleSearchBox">
-        <i class="fas fa-search" />
-      </div>
-
       <!-- Title centered -->
       <h1 class="page-title">欢迎来到广场</h1>
-
-      <!-- Search Box -->
-      <div v-if="showSearchBox" class="search-box">
-        <input
-          v-model="searchTerm"
-          type="text"
-          placeholder="搜索图片"
-          @input="filterImages"
-        />
-      </div>
     </div>
 
     <!-- Image Grid -->
     <div class="image-grid">
-      <div
-        v-for="(image, index) in filteredImages"
-        v-if="filteredImages.length > 0"
-        :key="index"
-        class="image-item"
-      >
-        <div class="image">
-          <img :src="image.src" alt="图片" />
-          <div class="image-content">
-            <h1>{{ image.title }}</h1>
-            <div class="icons">
-              <a href="#" class="icon fas fa-heart" />
-              <a href="#" class="icon fas fa-comment" />
-              <a href="#" class="icon fas fa-share" />
-            </div>
-          </div>
-        </div>
+<!--      <div-->
+<!--        v-for="(image, index) in images"-->
+<!--        v-if="images.length > 0"-->
+<!--        :key="index"-->
+<!--        class="image-item"-->
+<!--        @click="openImageModal(image)"-->
+<!--      >-->
+<!--        <div class="photo">-->
+<!--          <img :src="image.url" :alt="image.name" class="photo-img">-->
+<!--        </div>-->
+<!--      </div>-->
+      <div class="photo" v-for="photo in images" :key="photo.id" @click="openImageModal(photo)">
+        <img :src="photo.url" :alt="photo.name" class="photo-img" />
       </div>
-      <div v-else class="no-content">
-        <p>无相关内容</p>
-      </div>
+<!--      <div v-else class="no-content">-->
+<!--        <p>无相关内容</p>-->
+<!--      </div>-->
     </div>
   </div>
 </template>
 
 <script>
+import { fetchPublicPhotos } from '@/api/general'
+
 export default {
   name: 'Home',
   data() {
     return {
-      images: [
-        { src: require('@/assets/img/i1.jpg'), title: '图片1' },
-        { src: require('@/assets/img/i2.jpg'), title: '图片2' },
-        { src: require('@/assets/img/i3.jpg'), title: '图片3' },
-        { src: require('@/assets/img/i4.jpg'), title: '图片4' },
-        { src: require('@/assets/img/i5.jpg'), title: '图片5' },
-        { src: require('@/assets/img/i6.jpg'), title: '图片6' },
-        { src: require('@/assets/img/i7.jpg'), title: '图片7' },
-        { src: require('@/assets/img/i8.jpg'), title: '图片8' },
-        { src: require('@/assets/img/i9.jpg'), title: '图片9' }
-      ],
-      showSearchBox: false,
-      searchTerm: '',
-      filteredImages: []
+      images: [], // 原始照片数据
+      isModalVisible: false, // 控制模态框显示与否
+      currentImage: {} // 当前放大的图片
     }
   },
-  mounted() {
-    this.filteredImages = this.images // Initially show all images
+  async created() {
+    await this.fetchPhotos() // 在组件创建时获取照片数据
   },
   methods: {
-    toggleSearchBox() {
-      this.showSearchBox = !this.showSearchBox
-      if (!this.showSearchBox) {
-        this.searchTerm = ''
-        this.filteredImages = this.images // Reset to show all images when search box is closed
-      }
-    },
-    filterImages() {
-      if (this.searchTerm.trim() === '') {
-        this.filteredImages = this.images // Show all images if search is cleared
-      } else {
-        this.filteredImages = this.images.filter((image) =>
-          image.title.includes(this.searchTerm)
-        )
+    // 从后端获取照片
+    async fetchPhotos() {
+      try {
+        const response = await fetchPublicPhotos() // 调用 API 方法获取公开照片
+        if (response.code === 20000) {
+          this.images = response.data// .photos
+        } else {
+          this.$message.error('无法加载照片')
+        }
+      } catch (error) {
+        console.error('获取照片时出错:', error)
+        this.$message.error('加载照片失败')
       }
     }
   }
@@ -93,183 +63,44 @@ export default {
 </script>
 
 <style scoped>
-/* Home layout styles */
-html, body {
-  padding: 20px;
-  background-color: #f0f0f0;
-  height: auto; /* 高度动态变化 */
-  overflow: hidden;
-}
-
 .home {
-  padding: 0px;
-  background-color: #f0f0f0;
-  height: 100vh;
-  overflow: auto; /* 保留垂直滚动 */
-  -ms-overflow-style: none; /* IE 和 Edge 隐藏滚动条 */
-  scrollbar-width: none; /* Firefox 隐藏滚动条 */
-}
-
-/* Header layout with search icon on the left and title centered */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-}
-
-.search-icon {
-  font-size: 24px;
-  cursor: pointer;
-  position: absolute;
-  left: 20px;
+  padding: 30px;
+  background-color: #f8f8f8;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .page-title {
-  margin: 0;
-  font-size: 35px;
-  text-align: center;
-  flex-grow: 1;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
 }
 
-/* Search Box Styles */
-.search-box {
-  position: absolute;
-  top: 0px;
-  left: 50px;
-  background-color: #fff;
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 200px;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 0px;
-  font-size: 16px;
-}
-
-/* No Content Styles */
-.no-content {
-  text-align: center;
-  color: #999;
-  font-size: 18px;
-  padding: 20px;
-  width: 100%;
-}
-
-/* Image Grid */
 .image-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr); /* 三列布局 */
   gap: 10px;
-  /* max-height: calc(100vh - 100px); 限制最大高度避免溢出 */
-  overflow: hidden; /* 禁用滚动条 */
 }
 
-/* Image item styles */
 .image-item {
-  overflow: hidden;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
   cursor: pointer;
 }
 
-.image {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
+.photo-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
 }
 
-.image img {
-  width: 100%;
-  display: block;
-  transition: transform 0.5s ease-in-out;
+.no-content {
+  color: #888;
+  font-size: 16px;
 }
 
-.image:hover img {
-  transform: scale(1.1); /* 放大效果 */
-}
-
-.image-content {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  padding: 40px;
-  box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.5); /* 背景遮罩 */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  transform: translateY(100%);
-  transition: transform 0.5s ease-in-out;
-}
-
-.image:hover .image-content {
-  transform: translateY(0); /* 内容上滑显示 */
-}
-
-.image-content h1 {
-  color: #fff;
-  text-transform: uppercase;
-  transform: translateY(20px);
-  transition: transform 0.4s;
-}
-
-.image:hover .image-content h1 {
-  transform: translateY(0);
-}
-
-.icons {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.icon {
-  text-decoration: none;
-  color: #fff;
-  font-size: 22px;
-  margin: 0 10px;
-  transform: translateY(80px);
-  transition: transform 0.4s ease-in-out, color 0.4s;
-}
-
-.image:hover .icon {
-  transform: translateY(0);
-}
-
-.icon:nth-child(1) {
-  transition: transform 0.4s 0.05s, color 0.4s;
-}
-
-.icon:nth-child(2) {
-  transition: transform 0.4s 0.1s, color 0.4s;
-}
-
-.icon:nth-child(3) {
-  transition: transform 0.4s 0.15s, color 0.4s;
-}
-
-.icon:hover {
-  color: #3498db;
-}
-
-.image-content::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.7);
-  width: 100%;
-  height: 0px;
-  clip-path: polygon(0 100%, 100% 0, 100% 100%);
-  transition: 0.5s;
-}
-
-.image:hover .image-content::before {
-  height: 140px;
-}
 </style>

@@ -13,13 +13,23 @@
 
     <!-- 显示相册中的照片 -->
     <div class="image-grid">
-      <div class="photo" v-for="photo in photos" :key="photo.id">
+      <div class="photo" v-for="photo in photos" :key="photo.id" @click="openImageModal(photo)">
         <img :src="photo.url" :alt="photo.name" class="photo-img" />
       </div>
     </div>
 
     <!-- 隐藏的文件输入框 -->
     <input ref="fileInput" type="file" style="display: none" @change="handleFileUpload">
+
+    <!-- 放大查看照片的模态框 -->
+    <div v-if="isModalVisible" class="image-modal" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <button class="close-btn" @click="closeModal">×</button> <!-- Close button -->
+        <img :src="currentImage.url" :alt="currentImage.name" class="modal-image"/>
+        <button class="prev-btn" @click="showPrevImage">❮</button>
+        <button class="next-btn" @click="showNextImage">❯</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -36,7 +46,9 @@ export default {
         isPrivate: false,
         createdAt: ''
       },
-      photos: [] // 照片列表
+      photos: [], // 照片列表
+      isModalVisible: false, // 控制模态框显示与否
+      currentImage: {} // 当前放大的图片
     }
   },
   created() {
@@ -81,6 +93,37 @@ export default {
           console.error('上传照片时出错:', error)
           this.$message.error('照片上传失败')
         }
+      }
+    },
+
+    // 打开图片模态框
+    openImageModal(photo) {
+      this.currentImage = photo
+      this.isModalVisible = true
+    },
+
+    // 关闭图片模态框
+    closeModal() {
+      this.isModalVisible = false
+    },
+
+    // 显示上一张图片
+    showPrevImage() {
+      const currentIndex = this.photos.indexOf(this.currentImage)
+      if (currentIndex > 0) {
+        this.currentImage = this.photos[currentIndex - 1]
+      } else {
+        this.currentImage = this.photos[this.photos.length - 1] // 循环到最后一张
+      }
+    },
+
+    // 显示下一张图片
+    showNextImage() {
+      const currentIndex = this.photos.indexOf(this.currentImage)
+      if (currentIndex < this.photos.length - 1) {
+        this.currentImage = this.photos[currentIndex + 1]
+      } else {
+        this.currentImage = this.photos[0] // 循环到第一张
       }
     }
   }
@@ -152,4 +195,72 @@ strong {
   border-radius: 4px;
   margin-bottom: 8px;
 }
+
+/* 模态框样式 */
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 54px; /* 距离左边20px */
+  width: calc(100% - 54px); /* 总宽度减去左20px的空白 */
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8); /* 半透明背景 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-image {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+.prev-btn, .next-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 24px;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.prev-btn {
+  left: 10px;
+}
+
+.next-btn {
+  right: 10px;
+}
+
+/* Close button style */
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  background: transparent;
+  color: white;
+  font-size: 30px;
+  border: none;
+  cursor: pointer;
+  z-index: 20;
+}
+
+.close-btn:hover {
+  color: #ff4d4d; /* Hover color for the close button */
+}
 </style>
+
