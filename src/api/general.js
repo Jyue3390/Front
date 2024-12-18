@@ -1,10 +1,11 @@
 import request from '@/utils/request'
 
 // 获取相册详情
-export function fetchPublicPhotos() {
+export function fetchPublicPhotos(userId) {
   return request({
     url: '/general/public',
     method: 'get',
+    params: { userId: userId },
     timeout: 100000
   })
 }
@@ -12,15 +13,15 @@ export function fetchPublicPhotos() {
 // 点赞
 export function likePhoto(photoId, userId) {
   return request({
-    url: `/like/${photoId}/${userId}`,
+    url: `/general/like/${photoId}/${userId}`,
     method: 'put'
   })
 }
 
 // 评论
-export function commentOnPhoto(photoId, comment) {
+export function commentOnPhoto(photoId, userId, comment) {
   return request({
-    url: `/general/comment/${photoId}`,
+    url: `/general/comment/${photoId}/${userId}`,
     method: 'post',
     data: { comment },
     timeout: 100000
