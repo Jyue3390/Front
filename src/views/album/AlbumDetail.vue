@@ -133,8 +133,9 @@ export default {
 <style scoped>
 .album-detail {
   padding: 30px;
+  left: 54px; /* 距离左边20px */
+  width: calc(100% - 54px); /* 总宽度减去左20px的空白 */
   background-color: #f8f8f8;
-  max-width: 1200px;
   margin: 0 auto;
   text-align: center;
 }

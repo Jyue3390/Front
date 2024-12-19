@@ -17,14 +17,18 @@ export function likePhoto(photoId, userId) {
     method: 'put'
   })
 }
-
-// 评论
-export function commentOnPhoto(photoId, userId, comment) {
+export function unlikePhoto(photoId, userId) {
   return request({
-    url: `/general/comment/${photoId}/${userId}`,
+    url: `/general/unlike/${photoId}/${userId}`,
+    method: 'put'
+  })
+}
+// 评论
+export function commentOnPhoto(photoId, userId, userName, content) {
+  return request({
+    url: `/general/comment/${photoId}/${userId}/${userName}`,
     method: 'post',
-    data: { comment },
-    timeout: 100000
+    data: { content }
   })
 }
 
