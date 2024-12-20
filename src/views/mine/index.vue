@@ -1,8 +1,5 @@
 <template>
   <div class="mine-container">
-    <!-- mine Section -->
-    <div class="mine-text">name: {{ name }}  role:{{ role }}  id:{{ id }}</div>
-
     <!-- Profile Section -->
     <div class="profile">
       <!-- 创建相册按钮 -->

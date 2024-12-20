@@ -161,11 +161,11 @@ export default {
           const comment = photo.commentText.trim()
           const response = await commentOnPhoto(photoId, userId, userName, comment)
           if (response.code === 20000) {
-            photo.comments.push({
-              id: response.data.id,
-              userName: response.data.userName,
-              content: comment
-            })
+            // photo.comments.push({
+            //   id: response.data.id,
+            //   userName: response.data.userName,
+            //   content: comment
+            // })
             photo.commentText = ''
             photo.showCommentInput = false
           } else {

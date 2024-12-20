@@ -13,8 +13,12 @@
 
     <!-- 显示相册中的照片 -->
     <div class="image-grid">
-      <div class="photo" v-for="photo in photos" :key="photo.id" @click="openImageModal(photo)">
-        <img :src="photo.url" :alt="photo.name" class="photo-img" />
+      <div v-for="photo in photos" :key="photo.id" class="photo" @click="openImageModal(photo)">
+        <img :src="photo.url" :alt="photo.name" class="photo-img">
+        <!-- 显示照片审核状态 -->
+        <p :class="getAuditStatusClass(photo.auditStatus)">
+          {{ getAuditStatusText(photo.auditStatus) }}
+        </p>
       </div>
     </div>
 
@@ -25,7 +29,7 @@
     <div v-if="isModalVisible" class="image-modal" @click="closeModal">
       <div class="modal-content" @click.stop>
         <button class="close-btn" @click="closeModal">×</button> <!-- Close button -->
-        <img :src="currentImage.url" :alt="currentImage.name" class="modal-image"/>
+        <img :src="currentImage.url" :alt="currentImage.name" class="modal-image">
         <button class="prev-btn" @click="showPrevImage">❮</button>
         <button class="next-btn" @click="showNextImage">❯</button>
       </div>
@@ -125,6 +129,19 @@ export default {
       } else {
         this.currentImage = this.photos[0] // 循环到第一张
       }
+    },
+    // 获取审核状态的文本
+    getAuditStatusText(status) {
+      if (status === 0) return '审核中'
+      if (status === 1) return '审核通过'
+      return '审核不通过'
+    },
+
+    // 获取审核状态对应的类名
+    getAuditStatusClass(status) {
+      if (status === 0) return 'pending' // Pending
+      if (status === 1) return 'approved' // Approved
+      return 'rejected' // Rejected
     }
   }
 }
@@ -182,12 +199,23 @@ strong {
   overflow: hidden; /* 禁用滚动条 */
 }
 
-.photo {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  text-align: center;
+.photo p {
+  font-size: 14px;
+  color: #777;
+  margin-top: 8px;
+}
+
+/* 为不同审核状态添加颜色 */
+.photo p.pending {
+  color: #ff9900; /* Pending */
+}
+
+.photo p.approved {
+  color: green; /* Approved */
+}
+
+.photo p.rejected {
+  color: red; /* Rejected */
 }
 
 .photo-img {
@@ -264,4 +292,3 @@ strong {
   color: #ff4d4d; /* Hover color for the close button */
 }
 </style>
-

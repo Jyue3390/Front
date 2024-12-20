@@ -56,6 +56,10 @@
       <el-form-item prop="email">
         <el-input v-model="registerForm.email" placeholder="Email" name="email" type="email" />
       </el-form-item>
+      <!-- 注册电话 -->
+      <el-form-item prop="phone">
+        <el-input v-model="registerForm.phone" placeholder="Phone" name="phone" type="phone" />
+      </el-form-item>
 
       <!-- 注册提交按钮 -->
       <el-button type="primary" style="width:100%;margin-bottom:20px;" @click.native.prevent="handleRegister">注册</el-button>
@@ -88,6 +92,16 @@ export default {
         callback()
       }
     }
+    const validatePhone = (rule, value, callback) => {
+      const phoneRegex = /^1[3-9]\d{9}$/ // 简单的中国大陆手机号验证
+      if (!value) {
+        callback(new Error('请输入电话号码'))
+      } else if (!phoneRegex.test(value)) {
+        callback(new Error('请输入正确的电话号码'))
+      } else {
+        callback()
+      }
+    }
     return {
       isRegistering: false, // 切换登录/注册状态
       loginForm: {
@@ -97,7 +111,8 @@ export default {
       registerForm: {
         username: '',
         password: '',
-        email: ''
+        email: '',
+        phone: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -106,7 +121,8 @@ export default {
       registerRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
         password: [{ required: true, trigger: 'blur', validator: validatePassword }],
-        email: [{ required: true, trigger: 'blur', type: 'email', message: '请输入正确的邮箱地址' }]
+        email: [{ required: true, trigger: 'blur', type: 'email', message: '请输入正确的邮箱地址' }],
+        phone: [{ required: true, trigger: 'blur', validator: validatePhone }]
       },
       loading: false,
       passwordType: 'password'
@@ -124,13 +140,6 @@ export default {
         if (valid) {
           this.loading = true
           this.$store.dispatch('user/login', this.loginForm).then(() => {
-            // 根据角色重定向
-            // const role = this.$store.state.user.role
-            // if (role === 'admin') {
-            //   this.$router.push('/')
-            // } else if (role === 'editor') {
-            //   this.$router.push('/')
-            // }
             this.$router.push('/')
             this.loading = false
           }).catch(() => {

@@ -8,7 +8,10 @@ const getDefaultState = () => {
     name: '',
     avatar: '',
     id: '',
-    role: '' // 添加role属性
+    role: '', // 添加role属性
+    violation: '', // 添加violation属性
+    email: '', // 添加email属性
+    phone: '' // 添加phone属性
   }
 }
 
@@ -30,12 +33,24 @@ const mutations = {
   SET_ROLE: (state, role) => { // 添加设置role的mutation
     state.role = role
   },
-  SET_ID: (state, id) => { // 添加设置role的mutation
+  SET_VIOLATION: (state, violation) => {
+    state.violation = violation
+  },
+  SET_EMAIL: (state, email) => {
+    state.email = email
+  },
+  SET_PHONE: (state, phone) => {
+    state.phone = phone
+  },
+  SET_ID: (state, id) => {
     state.id = id
   }
 }
 
 const actions = {
+  setAvatar({ commit }, avatarUrl) {
+    commit('SET_AVATAR', avatarUrl) // 调用 mutation 更新头像
+  },
   // user login
   login({ commit }, userInfo) {
     const { username, password } = userInfo
@@ -45,12 +60,6 @@ const actions = {
         commit('SET_TOKEN', data.token)
         commit('SET_ROLE', data.role) // 提取并设置role
         setToken(data.token)
-        // if (data.role === 'admin') {
-        //   return this.$router.push('/dashboard')
-        // } else if (data.role === 'editor') {
-        //   return this.$router.push('/form')
-        // }
-        // this.$router.push('/')
         resolve()
       }).catch(error => {
         reject(error)
@@ -68,11 +77,14 @@ const actions = {
           return reject('Verification failed, please Login again.')
         }
 
-        const { name, avatar, role, id } = data // 提取role
+        const { name, avatar, role, id, violation, email, phone } = data
         commit('SET_ID', id)
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
         commit('SET_ROLE', role) // 设置role
+        commit('SET_VIOLATION', violation)
+        commit('SET_EMAIL', email)
+        commit('SET_PHONE', phone)
         resolve(data)
       }).catch(error => {
         reject(error)
