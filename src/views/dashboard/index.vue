@@ -25,6 +25,7 @@
         <p><strong>年龄:</strong> {{ userDetails.age }}</p>
         <p><strong>性别:</strong> {{ userDetails.gender }}</p>
         <p><strong>生日:</strong> {{ userDetails.birthday }}</p>
+        <p><strong>电话:</strong> {{ userDetails.phone }}</p>
         <p><strong>身份证号:</strong> {{ userDetails.idcard }}</p>
         <p><strong>医保卡号:</strong> {{ userDetails.medicalcard }}</p>
         <p><strong>病情:</strong> {{ userDetails.illness }}</p>
@@ -73,8 +74,8 @@ export default {
         const response = await getUserDetails(this.role, this.$store.state.user.userId)
         console.log('后端返回数据:', response) // 打印后端返回的数据
         if (response.code === 20000) {
-          this.userDetails = response.data; // 直接绑定 Map 数据
-          console.log('Parsed userDetails:', this.userDetails);
+          this.userDetails = response.data // 直接绑定 Map 数据
+          console.log('Parsed userDetails:', this.userDetails)
         } else {
           alert(response.message || '查询失败')
         }

@@ -1,42 +1,27 @@
 import request from '@/utils/request'
 
-// 获取相册详情
-export function fetchPublicPhotos(userId) {
+// 获取科室列表
+export function fetchDepartments() {
   return request({
-    url: '/general/public',
-    method: 'get',
-    params: { userId: userId },
-    timeout: 100000
+    url: '/general/departments', // Replace with the actual endpoint for fetching departments
+    method: 'get'
+  })
+}
+// 获取医生信息
+export function fetchDoctors(departmentId) {
+  return request({
+    url: `/general/doctors?departmentId=${departmentId}`,
+    method: 'get'
   })
 }
 
-// 点赞
-export function likePhoto(photoId, userId) {
+// 发起预约请求或取消预约请求
+// 发起预约请求或取消预约请求
+export function makeAppointment({ visitTimeId, doctorId, isCancel }) {
   return request({
-    url: `/general/like/${photoId}/${userId}`,
-    method: 'put'
-  })
-}
-export function unlikePhoto(photoId, userId) {
-  return request({
-    url: `/general/unlike/${photoId}/${userId}`,
-    method: 'put'
-  })
-}
-// 评论
-export function commentOnPhoto(photoId, userId, userName, content) {
-  return request({
-    url: `/general/comment/${photoId}/${userId}/${userName}`,
+    url: '/general/appointment', // 始终调用同一个接口
     method: 'post',
-    data: { content }
+    data: { visitTimeId, doctorId, isCancel } // 传递 isCancel 来决定操作
   })
 }
 
-// 分享
-export function sharePhoto(photoId) {
-  return request({
-    url: `/general/share/${photoId}`,
-    method: 'post',
-    timeout: 100000
-  })
-}
