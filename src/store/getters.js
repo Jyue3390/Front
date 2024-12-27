@@ -8,6 +8,7 @@ const getters = {
   id: state => state.user.id,
   violation: state => state.user.violation,
   email: state => state.user.email,
-  phone: state => state.user.phone
+  phone: state => state.user.phone,
+  userId: state => state.user.userId
 }
 export default getters

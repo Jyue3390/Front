@@ -11,7 +11,8 @@ const getDefaultState = () => {
     role: '', // 添加role属性
     violation: '', // 添加violation属性
     email: '', // 添加email属性
-    phone: '' // 添加phone属性
+    phone: '', // 添加phone属性
+    userId: ''
   }
 }
 
@@ -44,6 +45,9 @@ const mutations = {
   },
   SET_ID: (state, id) => {
     state.id = id
+  },
+  SET_USER_ID: (state, userId) => {
+    state.userId = userId
   }
 }
 
@@ -55,10 +59,11 @@ const actions = {
   login({ commit }, userInfo) {
     const { username, password } = userInfo
     return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then(response => {
+      login({ name: username.trim(), password: password }).then(response => {
         const { data } = response
         commit('SET_TOKEN', data.token)
         commit('SET_ROLE', data.role) // 提取并设置role
+        commit('SET_USER_ID', data.userId)
         setToken(data.token)
         resolve()
       }).catch(error => {
@@ -77,14 +82,13 @@ const actions = {
           return reject('Verification failed, please Login again.')
         }
 
-        const { name, avatar, role, id, violation, email, phone } = data
+        const { name, avatar, role, id, violation, userId } = data
         commit('SET_ID', id)
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
         commit('SET_ROLE', role) // 设置role
         commit('SET_VIOLATION', violation)
-        commit('SET_EMAIL', email)
-        commit('SET_PHONE', phone)
+        commit('SET_USER_ID', userId)
         resolve(data)
       }).catch(error => {
         reject(error)

@@ -7,6 +7,13 @@ export function login(data) {
     data
   })
 }
+export function getUserDetails(role, userId) {
+  return request({
+    url: '/user/details',
+    method: 'get',
+    params: { role, userId }
+  })
+}
 
 export function getInfo(token) {
   return request({

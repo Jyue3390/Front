@@ -2,115 +2,85 @@
   <div id="app">
     <main>
       <div class="user-info">
-        <div class="avatar">
-          <!-- 实时绑定 Vuex 中的 avatar 状态 -->
-          <img :src="avatar" alt="用户头像">
-          <input type="file" @change="uploadAvatar">
-        </div>
         <div class="info">
           <label>用户名:</label>
-          <input v-model="name" :disabled="!isEditing" type="text">
-
-          <label>邮箱:</label>
-          <input v-model="email" :disabled="!isEditing" type="email">
-
-          <label>电话:</label>
-          <input v-model="phone" :disabled="!isEditing" type="tel">
-
-          <button v-if="!isEditing" @click="editInfo">修改信息</button>
-          <button v-if="isEditing" @click="saveChanges">保存更改</button>
+          <span>{{ name }}</span>
         </div>
+      </div>
+
+      <div v-if="role === 'doctor' && userDetails" class="user-details">
+        <h3>医生详情</h3>
+        <p><strong>姓名:</strong> {{ userDetails.name }}</p>
+        <p><strong>部门ID:</strong> {{ userDetails.departmentid }}</p>
+        <p><strong>专长:</strong> {{ userDetails.specialty }}</p>
+        <p><strong>职称:</strong> {{ userDetails.title }}</p>
+        <p><strong>工作编号:</strong> {{ userDetails.workid }}</p>
+        <p><strong>联系电话:</strong> {{ userDetails.contactnumber }}</p>
+        <p><strong>在岗状态:</strong> {{ userDetails.ondutystatus ? '是' : '否' }}</p>
+      </div>
+
+      <div v-if="role === 'patient' && userDetails" class="user-details">
+        <h3>患者详情</h3>
+        <p><strong>姓名:</strong> {{ userDetails.name }}</p>
+        <p><strong>年龄:</strong> {{ userDetails.age }}</p>
+        <p><strong>性别:</strong> {{ userDetails.gender }}</p>
+        <p><strong>生日:</strong> {{ userDetails.birthday }}</p>
+        <p><strong>身份证号:</strong> {{ userDetails.idcard }}</p>
+        <p><strong>医保卡号:</strong> {{ userDetails.medicalcard }}</p>
+        <p><strong>病情:</strong> {{ userDetails.illness }}</p>
+        <p><strong>地址:</strong> {{ userDetails.address }}</p>
       </div>
     </main>
   </div>
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
-import { uploadPhoto, updateUserInfo, getUserInfoById } from '@/api/user'
+import { mapState } from 'vuex'
+import { getUserDetails } from '@/api/user'
 
 export default {
   name: 'UserProfile',
   computed: {
-    ...mapGetters([
-      'name',
-      'id', // 用户 ID
-      'role', // 用户角色
-      'avatar', // 实时从 Vuex 获取用户头像 URL
-      'violation',
-      'phone',
-      'email'
+    ...mapState('user', [
+      'name', // 映射用户名
+      'userId', // 映射用户ID
+      'role' // 映射用户角色
     ])
   },
   data() {
     return {
-      isEditing: false // 控制是否处于编辑模式
+      userDetails: {} // 用于存储医生或患者详细信息
+    }
+  },
+  mounted() {
+    if (this.userId) {
+      console.log('UserId is:', this.userId) // 输出 userId
+      this.fetchDetails() // 页面加载时获取用户信息
+    } else {
+      console.log('UserId is not set yet')
+      this.$watch('userId', (newUserId) => {
+        if (newUserId) {
+          console.log('UserId has been set:', newUserId)
+          this.fetchDetails()
+        }
+      })
     }
   },
   methods: {
-    ...mapActions(['setAvatar']), // Vuex action，用于更新头像
-
-    async uploadAvatar(event) {
-      const file = event.target.files[0]
-      if (file) {
-        const formData = new FormData()
-        formData.append('userId', this.id) // 从 Vuex 获取用户 ID
-        formData.append('file', file)
-
-        try {
-          const response = await uploadPhoto(this.id, file) // 调用 API 上传
-          alert('上传中，请等待')
-          if (response.code === 20000) {
-            alert('头像上传成功')
-            // 获取最新用户数据
-            const userInfoResponse = await getUserInfoById(this.id)
-            if (userInfoResponse.code === 20000) {
-              // 更新 Vuex 状态
-              this.$store.commit('user/SET_AVATAR', userInfoResponse.data.avatar)
-              this.$store.commit('user/SET_NAME', userInfoResponse.data.name)
-              this.$store.commit('user/SET_EMAIL', userInfoResponse.data.email)
-              this.$store.commit('user/SET_PHONE', userInfoResponse.data.phone)
-            }
-          } else {
-            alert('头像上传失败，请重试')
-          }
-        } catch (error) {
-          console.error('上传头像时出错:', error)
-          alert('上传失败，请检查网络或稍后再试')
-        }
-      }
-    },
-    editInfo() {
-      this.isEditing = true
-    },
-    async saveChanges() {
+    async fetchDetails() {
       try {
-        const response = await updateUserInfo({
-          userId: this.id,
-          name: this.name,
-          email: this.email,
-          phone: this.phone
-        })
-
+        console.log('请求参数:', { role: this.role, name: this.name, userId: this.$store.state.user.userId }) // 打印发送给后端的参数
+        const response = await getUserDetails(this.role, this.$store.state.user.userId)
+        console.log('后端返回数据:', response) // 打印后端返回的数据
         if (response.code === 20000) {
-          alert('信息已保存')
-          this.isEditing = false
-
-          // 获取最新用户数据
-          const userInfoResponse = await getUserInfoById(this.id)
-          if (userInfoResponse.code === 20000) {
-            // 更新 Vuex 状态
-            this.$store.commit('user/SET_AVATAR', userInfoResponse.data.avatar)
-            this.$store.commit('user/SET_NAME', userInfoResponse.data.name)
-            this.$store.commit('user/SET_EMAIL', userInfoResponse.data.email)
-            this.$store.commit('user/SET_PHONE', userInfoResponse.data.phone)
-          }
+          this.userDetails = response.data; // 直接绑定 Map 数据
+          console.log('Parsed userDetails:', this.userDetails);
         } else {
-          alert('保存失败，请重试')
+          alert(response.message || '查询失败')
         }
       } catch (error) {
-        console.error('保存信息时出错:', error)
-        alert('保存失败，请稍后再试')
+        console.error('获取用户信息出错:', error) // 打印错误信息
+        alert('获取信息失败，请稍后重试')
       }
     }
   }
@@ -123,59 +93,24 @@ export default {
   margin-top: 50px;
 }
 
-header {
-  background-color: #42b983;
-  padding: 20px;
-  color: white;
-}
-
 .user-info {
   display: flex;
   justify-content: center;
   margin-top: 30px;
 }
 
-.avatar {
-  margin-right: 20px;
-}
-
-.avatar img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin-bottom: 10px;
-}
-
-.avatar input[type="file"] {
-  display: block;
-  margin-top: 10px;
-}
-
 .info {
   text-align: left;
 }
 
-.info label {
-  display: block;
-  margin-top: 10px;
-}
-
-.info input {
-  width: 200px;
-  padding: 8px;
-  margin-top: 5px;
-  margin-bottom: 10px;
-}
-
-button {
-  padding: 10px 20px;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #358a6b;
+.user-details {
+  margin-top: 30px;
+  text-align: left;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 </style>
