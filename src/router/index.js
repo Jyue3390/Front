@@ -113,14 +113,14 @@ export const constantRoutes = [
     ]
   },
   {
-    path: 'album',
+    path: 'course',
     component: Layout,
     children: [
       {
-        path: ':albumId',
-        name: 'AlbumDetail',
-        component: () => import('@/views/album/AlbumDetail.vue'),
-        meta: { title: 'Album Detail', icon: 'album' }
+        path: ':courseId',
+        name: 'CourseDetail',
+        component: () => import('@/views/album/CourseDetail.vue'),
+        meta: { title: 'Course Detail', icon: 'album' }
       }
     ],
     hidden: true // 隐藏在侧边栏中

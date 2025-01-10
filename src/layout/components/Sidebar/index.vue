@@ -36,12 +36,12 @@ export default {
     // 过滤出根据角色显示的路由
     filteredRoutes() {
       const allRoutes = this.$router.options.routes
-      if (this.role === 'admin') {
+      if (this.role === 'teacher') {
         // admin 看到所有路由
         return allRoutes.filter(route =>
           route.path === '/' || route.path === '/comment' || route.path === '/image' || route.path === 'external-link'
         )
-      } else if (this.role === 'editor') {
+      } else if (this.role === 'student') {
         // editor 只看到 dashboard 和 form
         return allRoutes.filter(route =>
           route.path === '/' || route.path === '/mine' || route.path === '/form' || route.path === 'external-link'

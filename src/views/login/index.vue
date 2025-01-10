@@ -3,7 +3,7 @@
     <el-form v-if="!isRegistering" ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
       <!-- 登录标题 -->
       <div class="title-container">
-        <h3 class="title">欢迎登录电子相册</h3>
+        <h3 class="title">欢迎登录课程答疑系统</h3>
       </div>
 
       <!-- 用户名输入 -->
@@ -52,15 +52,6 @@
         <el-input v-model="registerForm.password" type="password" placeholder="Password" name="password" />
       </el-form-item>
 
-      <!-- 注册邮箱 -->
-      <el-form-item prop="email">
-        <el-input v-model="registerForm.email" placeholder="Email" name="email" type="email" />
-      </el-form-item>
-      <!-- 注册电话 -->
-      <el-form-item prop="phone">
-        <el-input v-model="registerForm.phone" placeholder="Phone" name="phone" type="phone" />
-      </el-form-item>
-
       <!-- 注册提交按钮 -->
       <el-button type="primary" style="width:100%;margin-bottom:20px;" @click.native.prevent="handleRegister">注册</el-button>
 
@@ -72,13 +63,11 @@
 
 <script>
 import { register } from '@/api/user' // 导入新增的注册 API
-// import { validUsername } from '@/utils/validate'
 
 export default {
   name: 'Login',
   data() {
     const validateUsername = (rule, value, callback) => {
-      // if (!validUsername(value)) {
       if (!value) {
         callback(new Error('请输入正确的用户名'))
       } else {
@@ -92,16 +81,6 @@ export default {
         callback()
       }
     }
-    const validatePhone = (rule, value, callback) => {
-      const phoneRegex = /^1[3-9]\d{9}$/ // 简单的中国大陆手机号验证
-      if (!value) {
-        callback(new Error('请输入电话号码'))
-      } else if (!phoneRegex.test(value)) {
-        callback(new Error('请输入正确的电话号码'))
-      } else {
-        callback()
-      }
-    }
     return {
       isRegistering: false, // 切换登录/注册状态
       loginForm: {
@@ -111,8 +90,7 @@ export default {
       registerForm: {
         username: '',
         password: '',
-        email: '',
-        phone: ''
+        role: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -120,9 +98,7 @@ export default {
       },
       registerRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }],
-        email: [{ required: true, trigger: 'blur', type: 'email', message: '请输入正确的邮箱地址' }],
-        phone: [{ required: true, trigger: 'blur', validator: validatePhone }]
+        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       loading: false,
       passwordType: 'password'

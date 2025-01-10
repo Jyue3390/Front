@@ -32,3 +32,13 @@ export function updateCommentAuditStatus(Id, status) {
     }
   })
 }
+// 禁言用户接口
+export function muteUserViolation(userId) {
+  return request({
+    url: `/manage/users/${userId}/violation`,
+    method: 'put',
+    data: {
+      violation: 1 // 1 means the user is muted
+    }
+  })
+}

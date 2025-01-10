@@ -3,7 +3,14 @@
     <!-- Profile Section -->
     <div class="profile">
       <!-- 创建相册按钮 -->
-      <button class="create-album-btn" @click="createAlbum">新建相册</button>
+      <button
+        class="create-album-btn"
+        :disabled="isMuted"
+        @click="createAlbum"
+      >
+        {{ isMuted ? '您已被禁言，无法上传图片' : '新建相册' }}
+      </button>
+      <p v-if="isMuted" class="muted-message">您已被禁言</p> <!-- Show muted message if user is muted -->
 
       <!-- 显示相册 -->
       <div class="album-grid">
@@ -61,8 +68,13 @@ export default {
     ...mapGetters([
       'name',
       'id',
+      'violation',
       'role' // 从 Vuex 获取用户名称
-    ])
+    ]),
+    // 计算属性检查用户是否被禁言
+    isMuted() {
+      return this.violation !== 0
+    }
   },
   created() {
     // 获取用户相册列表
@@ -86,6 +98,10 @@ export default {
     },
     // 创建相册按钮
     createAlbum() {
+      if (this.isMuted) {
+        this.$message.warning('您已被禁言')
+        return
+      }
       this.showNewAlbumForm = true
     },
     // 保存新建的相册
@@ -130,6 +146,11 @@ export default {
 </script>
 
 <style scoped>
+.muted-message {
+  color: red;
+  font-size: 14px;
+}
+
 .mine-container {
   padding: 20px;
   background-color: #f0f0f0;

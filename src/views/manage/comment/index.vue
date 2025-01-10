@@ -11,6 +11,8 @@
         <div class="audit-buttons">
           <button @click="handleAudit(comment.id, 1)">审核通过</button>
           <button @click="handleAudit(comment.id, 2)">审核不通过</button>
+          <!-- 禁言按钮 -->
+          <button @click="muteUser(comment.userId)">禁言</button>
         </div>
       </div>
     </div>
@@ -18,7 +20,7 @@
 </template>
 
 <script>
-import { fetchComments, updateCommentAuditStatus } from '@/api/manage' // API for fetching and updating comment status
+import { fetchComments, updateCommentAuditStatus, muteUserViolation } from '@/api/manage' // Include mute API
 
 export default {
   name: 'Home',
@@ -60,6 +62,20 @@ export default {
       } catch (error) {
         console.error('审核时出错:', error)
         this.$message.error('审核操作失败')
+      }
+    },
+    // 禁言用户
+    async muteUser(userId) {
+      try {
+        const response = await muteUserViolation(userId) // Call the API to mute the user
+        if (response.code === 20000) {
+          this.$message.success('用户已被禁言')
+        } else {
+          this.$message.error('禁言失败')
+        }
+      } catch (error) {
+        console.error('禁言操作失败:', error)
+        this.$message.error('禁言操作失败')
       }
     }
   }

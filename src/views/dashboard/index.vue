@@ -2,19 +2,18 @@
   <div id="app">
     <main>
       <div class="user-info">
-        <div class="avatar">
-          <img :src="avatar" alt="用户头像">
-          <input type="file" @change="uploadAvatar">
-        </div>
         <div class="info">
           <label>用户名:</label>
+          <input v-model="localUsername" :disabled="!isEditing" type="text">
+
+          <label>姓名:</label>
           <input v-model="localName" :disabled="!isEditing" type="text">
 
-          <label>邮箱:</label>
-          <input v-model="localEmail" :disabled="!isEditing" type="email">
+          <label>角色:</label>
+          <input v-model="localRole" :disabled="!isEditing" type="text">
 
-          <label>电话:</label>
-          <input v-model="localPhone" :disabled="!isEditing" type="tel">
+          <label>角色ID:</label>
+          <input v-model="localRoleid" :disabled="!isEditing" type="text">
 
           <button v-if="!isEditing" @click="editInfo">修改信息</button>
           <button v-if="isEditing" @click="saveChanges">保存更改</button>
@@ -26,19 +25,21 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { uploadPhoto, updateUserInfo, getUserInfoById } from '@/api/user'
+import { updateUserInfo, getInfo } from '@/api/user'
 
 export default {
   name: 'UserProfile',
   computed: {
-    ...mapGetters(['id', 'avatar', 'name', 'email', 'phone']) // Vuex 状态
+    ...mapGetters(['roleid', 'username', 'name', 'role', 'id', 'token']) // Vuex 状态
   },
   data() {
     return {
       isEditing: false, // 编辑模式标志
-      localName: '', // 本地存储用于编辑的用户名
-      localEmail: '', // 本地存储用于编辑的邮箱
-      localPhone: '' // 本地存储用于编辑的电话
+      localUsername: '', // 本地存储用于编辑的用户名
+      localName: '', // 本地存储用于编辑的姓名
+      localRole: '', // 本地存储用于编辑的角色
+      localRoleid: '', // 本地存储用于编辑的角色ID
+      localId: ''
     }
   },
   async mounted() {
@@ -46,56 +47,41 @@ export default {
     this.initializeLocalData() // 同步本地数据
   },
   methods: {
-    async uploadAvatar(event) {
-      const file = event.target.files[0]
-      if (file) {
-        const formData = new FormData()
-        formData.append('userId', this.id)
-        formData.append('file', file)
-
-        try {
-          const response = await uploadPhoto(this.id, file)
-          if (response.code === 20000) {
-            alert('头像上传成功')
-            await this.refreshUserInfo() // 刷新用户信息
-          } else {
-            alert('头像上传失败，请重试')
-          }
-        } catch (error) {
-          console.error('上传头像时出错:', error)
-          alert('上传失败，请稍后再试')
-        }
-      }
-    },
     editInfo() {
       this.isEditing = true
 
       // 初始化本地数据
+      this.localUsername = this.username
       this.localName = this.name
-      this.localEmail = this.email
-      this.localPhone = this.phone
-
+      this.localRole = this.role
+      this.localRoleid = this.roleid
+      this.localId = this.id
       // 调试输出当前用户信息
       console.log('修改前的用户信息:', {
+        username: this.username,
         name: this.name,
-        email: this.email,
-        phone: this.phone
+        role: this.role,
+        roleid: this.roleid,
+        id: this.id
       })
     },
     async saveChanges() {
       // 调试输出修改后的信息
       console.log('修改后的用户信息:', {
+        username: this.localUsername,
         name: this.localName,
-        email: this.localEmail,
-        phone: this.localPhone
+        role: this.localRole,
+        roleid: this.localRoleid,
+        id: this.id
       })
 
       try {
         const response = await updateUserInfo({
-          userId: this.id,
+          id: this.id,
+          username: this.localUsername,
           name: this.localName,
-          email: this.localEmail,
-          phone: this.localPhone
+          role: this.localRole,
+          roleid: this.localRoleid
         })
 
         if (response.code === 20000) {
@@ -111,26 +97,31 @@ export default {
       }
     },
     initializeLocalData() {
+      this.localUsername = this.username
       this.localName = this.name
-      this.localEmail = this.email
-      this.localPhone = this.phone
+      this.localRole = this.role
+      this.localRoleid = this.roleid
+      this.localId = this.id
 
       console.log('初始化本地数据:', {
+        localUsername: this.localUsername,
         localName: this.localName,
-        localEmail: this.localEmail,
-        localPhone: this.localPhone
+        localRole: this.localRole,
+        localRoleid: this.localRoleid,
+        localId: this.localId
       })
     },
 
     async refreshUserInfo() {
       try {
-        const userInfoResponse = await getUserInfoById(this.id)
+        const userInfoResponse = await getInfo(this.token)
         if (userInfoResponse.code === 20000) {
           const data = userInfoResponse.data
-          this.$store.commit('user/SET_AVATAR', data.avatar)
-          this.$store.commit('user/SET_NAME', data.username)
-          this.$store.commit('user/SET_EMAIL', data.email)
-          this.$store.commit('user/SET_PHONE', data.phone)
+          this.$store.commit('user/SET_ID', data.id)
+          this.$store.commit('user/SET_USERNAME', data.username)
+          this.$store.commit('user/SET_NAME', data.name)
+          this.$store.commit('user/SET_ROLE', data.role)
+          this.$store.commit('user/SET_ROLEID', data.roleid)
 
           // 刷新后再次同步本地数据
           this.initializeLocalData()
@@ -161,22 +152,6 @@ header {
   display: flex;
   justify-content: center;
   margin-top: 30px;
-}
-
-.avatar {
-  margin-right: 20px;
-}
-
-.avatar img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin-bottom: 10px;
-}
-
-.avatar input[type="file"] {
-  display: block;
-  margin-top: 10px;
 }
 
 .info {

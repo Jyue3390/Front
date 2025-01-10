@@ -11,7 +11,9 @@ const getDefaultState = () => {
     role: '', // 添加role属性
     violation: '', // 添加violation属性
     email: '', // 添加email属性
-    phone: '' // 添加phone属性
+    phone: '',
+    roleid: '',
+    username: ''
   }
 }
 
@@ -26,6 +28,9 @@ const mutations = {
   },
   SET_NAME: (state, name) => {
     state.name = name
+  },
+  SET_USERNAME: (state, username) => {
+    state.username = username
   },
   SET_AVATAR: (state, avatar) => {
     state.avatar = avatar
@@ -44,13 +49,13 @@ const mutations = {
   },
   SET_ID: (state, id) => {
     state.id = id
+  },
+  SET_ROLEID: (state, roleid) => {
+    state.roleid = roleid
   }
 }
 
 const actions = {
-  setAvatar({ commit }, avatarUrl) {
-    commit('SET_AVATAR', avatarUrl) // 调用 mutation 更新头像
-  },
   // user login
   login({ commit }, userInfo) {
     const { username, password } = userInfo
@@ -59,6 +64,10 @@ const actions = {
         const { data } = response
         commit('SET_TOKEN', data.token)
         commit('SET_ROLE', data.role) // 提取并设置role
+        commit('SET_USERNAME', data.username)
+        commit('SET_ROLEID', data.roleid)
+        commit('SET_NAME', data.name)
+        commit('SET_ID', data.id)
         setToken(data.token)
         resolve()
       }).catch(error => {
@@ -72,19 +81,15 @@ const actions = {
     return new Promise((resolve, reject) => {
       getInfo(state.token).then(response => {
         const { data } = response
-
         if (!data) {
           return reject('Verification failed, please Login again.')
         }
-
-        const { name, avatar, role, id, violation, email, phone } = data
+        const { id, name, role, roleid, username } = data
         commit('SET_ID', id)
+        commit('SET_USERNAME', username)
         commit('SET_NAME', name)
-        commit('SET_AVATAR', avatar)
         commit('SET_ROLE', role) // 设置role
-        commit('SET_VIOLATION', violation)
-        commit('SET_EMAIL', email)
-        commit('SET_PHONE', phone)
+        commit('SET_ROLEID', roleid)
         resolve(data)
       }).catch(error => {
         reject(error)
