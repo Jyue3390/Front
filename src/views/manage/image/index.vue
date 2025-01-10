@@ -1,219 +1,322 @@
 <template>
-  <div class="home">
-    <!-- Header -->
-    <div class="header">
-      <h1 class="page-title">审核照片页面</h1>
+  <div class="course-detail">
+    <h1>{{ course.courseName }}</h1>
+    <p><strong>课程描述:</strong> {{ course.description }}</p>
+    <p><strong>课程类别:</strong> {{ course.category }}</p>
+    <p><strong>类别描述:</strong> {{ course.categoryDescription }}</p>
+    <p><strong>创建时间:</strong> {{ formatDate(course.createdAt) }}</p>
+
+    <!-- 问题提交部分 -->
+    <div class="question-section">
+      <h3>提问</h3>
+      <input v-model="questionTitle" type="text" placeholder="问题标题" class="question-input">
+      <textarea v-model="questionDescription" placeholder="请输入问题描述..." rows="4" />
+      <input v-model="questionCategory" type="text" placeholder="问题类别（例如：数据结构、树、二叉搜索）" class="question-input">
+      <button :disabled="isSubmitting" @click="submitQuestion">提交问题</button>
+      <p v-if="submitError" class="error-message">{{ submitError }}</p>
     </div>
 
-    <!-- Image Grid -->
-    <div class="image-grid">
-      <div
-        v-for="photo in images"
-        :key="photo.id"
-        class="photo"
-      >
-        <div class="image-container">
-          <img :src="photo.url" :alt="photo.name" class="photo-img">
+    <!-- 展示课程问题 -->
+    <div class="questions-list">
+      <h3>已提问的问题</h3>
+      <div v-if="questions.length === 0">暂无问题。</div>
+      <div v-for="(question, index) in questions" :key="index" class="question-item">
+        <h4>{{ question.title }}</h4>
+        <p><strong>类别:</strong> {{ question.questionCategory }}</p>
+        <p><strong>描述:</strong> {{ question.description }}</p>
+        <p><strong>提问时间:</strong> {{ formatDate(question.createdAt) }}</p>
+
+        <!-- Answer Section -->
+        <button @click="toggleAnswerForm(question.id)">解答</button>
+
+        <!-- Answer Submission Form -->
+        <div v-if="question.showAnswerForm" class="answer-form">
+          <textarea v-model="question.answerText" placeholder="请输入您的解答..." rows="4"></textarea>
+          <button :disabled="isSubmitting" @click="submitAnswer(question)">提交解答</button>
         </div>
-        <div class="audit-button">
-          <button
-            class="audit"
-            @click="handleAudit(photo.id, 1)"
-          >
-            <span>审核通过</span>
-          </button>
-          <button
-            class="audit"
-            @click="handleAudit(photo.id, 2)"
-          >
-            <span>审核不通过</span>
-          </button>
+
+        <!-- Display Answers -->
+        <div v-if="question.answers && question.answers.length > 0">
+          <h5>已有解答:</h5>
+          <div v-for="(answer, idx) in question.answers" :key="idx" class="answer-item">
+            <p><strong>解答:</strong> {{ answer.content }}</p>
+            <p><strong>时间:</strong> {{ answer.createdAt }}</p>
+            <p><strong>解答者 ID:</strong> {{ answer.answererId }}</p> <!-- 显示解答者 ID -->
+            <p><strong>评分:</strong> {{ answer.score }}</p> <!-- 显示评分 -->
+          </div>
+        </div>
+
+        <!-- Show 'No Answers' message if no answers -->
+        <div v-if="question.noAnswersMessage" class="no-answers-message">
+          <p>暂无解答</p>
         </div>
       </div>
     </div>
+
   </div>
 </template>
-
 <script>
-import { fetchPhotos, updatePhotoAuditStatus } from '@/api/manage' // Add the API for updating audit status
+import {
+  fetchCourseDetails,
+  submitQuestion,
+  fetchCourseQuestions,
+  submitAnswer,
+  fetchQuestionAnswers
+} from '@/api/courses'
+import { mapGetters } from 'vuex'
 
 export default {
-  name: 'Home',
+  computed: {
+    ...mapGetters(['roleid', 'username', 'name', 'role', 'id', 'token'])
+  },
   data() {
     return {
-      images: [] // 照片数据
+      course: {},
+      questionTitle: '',
+      questionDescription: '',
+      questionCategory: '',
+      isSubmitting: false,
+      submitError: '',
+      questions: [] // 用于存储问题列表
     }
   },
-  async created() {
-    // 获取照片数据并赋值给 images
-    await this.fetchPhoto()
+  created() {
+    this.fetchCourseDetail(this.$route.params.id) // 获取课程详情
+    this.fetchQuestions(this.$route.params.id) // 获取课程问题
   },
   methods: {
-    // 从后端获取照片
-    async fetchPhoto() {
+    // 获取课程详情
+    async fetchCourseDetail(courseId) {
       try {
-        const response = await fetchPhotos()
+        const response = await fetchCourseDetails(courseId)
         if (response.code === 20000) {
-          console.log('获取成功')
-          this.images = response.data
+          this.course = response.data
         } else {
-          this.$message.error('无法加载照片')
+          this.$message.error('无法加载课程详情')
         }
       } catch (error) {
-        console.error('获取照片时出错:', error)
-        this.$message.error('加载照片失败')
+        console.error('获取课程详情时出错:', error)
+        this.$message.error('加载课程详情失败')
       }
     },
-    // 处理审核按钮点击
-    async handleAudit(photoId, status) {
+    // 获取课程问题
+    async fetchQuestions(courseId) {
       try {
-        const response = await updatePhotoAuditStatus(photoId, status) // 调用更新接口
+        const response = await fetchCourseQuestions(courseId)
         if (response.code === 20000) {
-          console.log('审核成功')
-          this.$message.success(status === 1 ? '审核通过' : '审核不通过')
+          this.questions = response.data.map(question => ({
+            ...question,
+            id: question.questionId, // 将 questionId 映射为 id
+            showAnswerForm: false, // Initially hide the answer form
+            answerText: '', // For holding the answer input
+            answers: [] // Initialize answers array
+          }))
 
-          // 更新本地图片状态并移除已审核的图片
-          const photoIndex = this.images.findIndex(img => img.id === photoId)
-          if (photoIndex !== -1) {
-            this.images.splice(photoIndex, 1) // 从数组中移除该图片
+          // For each question, fetch its answers
+          for (const question of this.questions) {
+            const answersResponse = await fetchQuestionAnswers(question.id)
+            if (answersResponse.code === 20000) {
+              if (answersResponse.data.length === 0) {
+                // 如果没有解答，则显示暂无解答
+                question.noAnswersMessage = '暂无解答'
+              } else {
+                // 将后端返回的 answers 数据填充到 question.answers 中
+                question.answers = answersResponse.data.map(answer => ({
+                  ...answer,
+                  content: answer.content, // 解答内容
+                  createdAt: this.formatDate(answer.createdAt), // 格式化时间
+                  answererId: answer.answererId, // 解答者 ID
+                  score: answer.score // 解答评分
+                }))
+              }
+            } else {
+              this.$message.error('无法加载问题解答')
+            }
           }
         } else {
-          this.$message.error('审核失败')
+          this.$message.error('无法加载课程问题')
         }
       } catch (error) {
-        console.error('审核时出错:', error)
-        this.$message.error('审核操作失败')
+        console.error('获取课程问题时出错:', error)
+        this.$message.error('加载课程问题失败')
       }
+    },
+    // Toggle the answer form visibility
+    toggleAnswerForm(questionId) {
+      const question = this.questions.find(q => q.id === questionId) // 使用 question.id
+      question.showAnswerForm = !question.showAnswerForm
+    },
+    // 提交问题
+    async submitQuestion() {
+      if (this.questionTitle.trim() === '' || this.questionDescription.trim() === '') {
+        this.submitError = '标题和描述不能为空！'
+        return
+      }
+
+      this.isSubmitting = true
+      this.submitError = '' // 清除之前的错误信息
+
+      const question = {
+        courseId: this.course.courseId,
+        studentId: this.roleid,
+        title: this.questionTitle,
+        description: this.questionDescription,
+        questionCategory: this.questionCategory
+      }
+
+      try {
+        const response = await submitQuestion(question)
+        if (response.code === 20000) {
+          this.$message.success('问题提交成功！')
+          this.questionTitle = '' // 清空标题输入框
+          this.questionDescription = '' // 清空描述输入框
+          this.questionCategory = '' // 清空类别输入框
+          this.fetchQuestions(this.course.courseId) // 提交成功后刷新问题列表
+        } else {
+          this.submitError = '提交问题失败，请稍后再试'
+        }
+      } catch (error) {
+        console.error('提交问题时出错:', error)
+        this.submitError = '提交问题失败，请稍后再试'
+      } finally {
+        this.isSubmitting = false
+      }
+    },
+    // 提交解答
+    async submitAnswer(question) {
+      if (question.answerText.trim() === '') {
+        this.$message.error('解答内容不能为空！')
+        return
+      }
+
+      this.isSubmitting = true
+
+      const answer = {
+        questionId: question.id, // 使用 question.id
+        answererId: this.roleid,
+        content: question.answerText
+      }
+
+      try {
+        const response = await submitAnswer(answer)
+        if (response.code === 20000) {
+          this.$message.success('解答提交成功！')
+          question.answerText = '' // 清空输入框
+          this.fetchQuestions(this.course.courseId) // 提交成功后刷新问题列表
+        } else {
+          this.$message.error('提交解答失败，请稍后再试')
+        }
+      } catch (error) {
+        console.error('提交解答时出错:', error)
+        this.$message.error('提交解答失败，请稍后再试')
+      } finally {
+        this.isSubmitting = false
+      }
+    },
+    // 格式化日期
+    formatDate(dateString) {
+      const date = new Date(dateString)
+      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
     }
   }
 }
 </script>
-
 <style scoped>
-.home {
+.course-detail {
   padding: 20px;
-  background-color: #f8f8f8;
-  left: 54px; /* 距离左边20px */
-  width: calc(100% - 54px); /* 总宽度减去左20px的空白 */
-  margin: 0 auto;
-  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.page-title {
-  font-size: 30px;
-  font-weight: bold;
+h1 {
+  font-size: 2rem;
   color: #333;
 }
 
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.photo {
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.image-container {
-  position: relative;
-  overflow: hidden;
-  border-radius: 8px;
-  width: 100%;
-}
-
-.photo-img {
-  max-width: 100%;
-  display: block;
-  transition: transform 0.5s ease-in-out;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  margin-top: 10px;
-  gap: 4px;
-}
-
-.like-count {
-  margin-top: 8px;
-  margin-left: 0px;
-  font-size: 14px;
+p {
+  font-size: 1.1rem;
   color: #555;
+  margin-bottom: 10px;
 }
 
-.like-button {
-  padding: 0;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
+strong {
+  font-weight: bold;
 }
 
-.like-button.liked .heart {
-  color: red;
+.question-section {
+  margin-top: 30px;
 }
 
-.like-button .heart {
-  font-size: 24px;
+.question-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ddd;
 }
 
-.comment-button {
-  padding: 0;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ddd;
 }
 
-.share-button {
-  padding: 0;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
-}
-
-.comment-input {
-  display: block;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.comment-input input {
-  padding: 6px;
-  width: 200px;
-  font-size: 14px;
-}
-
-.comment-input button {
-  padding: 6px;
-  font-size: 14px;
-  background-color: #3498db;
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
   color: white;
   border: none;
   cursor: pointer;
+  border-radius: 5px;
 }
 
-.comments {
-  margin-top: 12px;
-  text-align: left;
+button:disabled {
+  background-color: #ccc;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.9rem;
+}
+
+.questions-list {
+  margin-top: 40px;
+}
+
+.question-item {
+  margin-bottom: 20px;
+}
+
+.question-item h4 {
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.question-item p {
+  font-size: 1rem;
+  color: #555;
+}
+
+.answer-form {
+  margin-top: 15px;
+}
+
+.answer-form textarea {
   width: 100%;
+  padding: 10px;
 }
 
-.comment {
-  margin-bottom: 10px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+.answer-item {
+  margin-top: 10px;
 }
 
-.share-dropdown {
-  display: inline-block;
+.answer-item p {
+  font-size: 1rem;
+  color: #444;
 }
 </style>

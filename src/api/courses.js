@@ -18,7 +18,6 @@ export function createCourse(data) {
     }
   })
 }
-
 // 获取课程详情
 export function fetchCourseDetails(courseId) {
   return request({
@@ -43,6 +42,24 @@ export function submitQuestion(data) {
     method: 'post',
     data: {
       ...data // 动态添加课程数据
+    }
+  })
+}
+export function submitAnswer(data) {
+  return request({
+    url: `/answers/create`,
+    method: 'post',
+    data: {
+      ...data // 动态添加课程数据
+    }
+  })
+}
+export function fetchQuestionAnswers(questionId) {
+  return request({
+    url: `/answers/question/${questionId}`,
+    method: 'get',
+    data: {
+      questionId
     }
   })
 }

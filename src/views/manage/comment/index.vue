@@ -50,7 +50,7 @@ export default {
     },
     viewCourseDetails(courseId) {
       // 跳转到课程详情页，传递课程ID
-      this.$router.push({ name: 'CourseDetail', params: { id: courseId }})
+      this.$router.push({ name: 'Image', params: { id: courseId }})
     }
   }
 }
