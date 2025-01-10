@@ -25,13 +25,21 @@
         <p><strong>类别:</strong> {{ question.questionCategory }}</p>
         <p><strong>描述:</strong> {{ question.description }}</p>
         <p><strong>提问时间:</strong> {{ formatDate(question.createdAt) }}</p>
+        <p><strong>优秀问题:</strong> {{ question.excellent }}</p>
 
         <!-- Answer Section -->
         <button @click="toggleAnswerForm(question.id)">解答</button>
-
+        <button
+          v-if="role === 'teacher'"
+          :disabled="isSubmitting"
+          :class="{'excellent-button': question.isExcellent}"
+          @click="setExcellent(question.id)"
+        >
+          设为优秀问题
+        </button>
         <!-- Answer Submission Form -->
         <div v-if="question.showAnswerForm" class="answer-form">
-          <textarea v-model="question.answerText" placeholder="请输入您的解答..." rows="4"></textarea>
+          <textarea v-model="question.answerText" placeholder="请输入您的解答..." rows="4" />
           <button :disabled="isSubmitting" @click="submitAnswer(question)">提交解答</button>
         </div>
 
@@ -39,10 +47,17 @@
         <div v-if="question.answers && question.answers.length > 0">
           <h5>已有解答:</h5>
           <div v-for="(answer, idx) in question.answers" :key="idx" class="answer-item">
+            <p><strong>id:</strong> {{ answer.answerId }}</p>
             <p><strong>解答:</strong> {{ answer.content }}</p>
             <p><strong>时间:</strong> {{ answer.createdAt }}</p>
             <p><strong>解答者 ID:</strong> {{ answer.answererId }}</p> <!-- 显示解答者 ID -->
             <p><strong>评分:</strong> {{ answer.score }}</p> <!-- 显示评分 -->
+
+            <!-- Rating Section -->
+            <div v-if="!answer.hasRated">
+              <input v-model="answer.newScore" type="number" min="1" max="5" placeholder="评分（1-5）">
+              <button :disabled="isSubmitting" @click="submitRating(answer, question)">提交评分</button>
+            </div>
           </div>
         </div>
 
@@ -55,13 +70,16 @@
 
   </div>
 </template>
+
 <script>
 import {
   fetchCourseDetails,
   submitQuestion,
   fetchCourseQuestions,
   submitAnswer,
-  fetchQuestionAnswers
+  fetchQuestionAnswers,
+  submitAnswerRating,
+  setExcellentQuestion
 } from '@/api/courses'
 import { mapGetters } from 'vuex'
 
@@ -85,6 +103,7 @@ export default {
     this.fetchQuestions(this.$route.params.id) // 获取课程问题
   },
   methods: {
+    setExcellentQuestion,
     // 获取课程详情
     async fetchCourseDetail(courseId) {
       try {
@@ -107,26 +126,28 @@ export default {
           this.questions = response.data.map(question => ({
             ...question,
             id: question.questionId, // 将 questionId 映射为 id
+            excellent: question.excellent,
             showAnswerForm: false, // Initially hide the answer form
             answerText: '', // For holding the answer input
-            answers: [] // Initialize answers array
+            answers: [], // Initialize answers array
+            noAnswersMessage: '' // Message when no answers are available
           }))
-
-          // For each question, fetch its answers
           for (const question of this.questions) {
             const answersResponse = await fetchQuestionAnswers(question.id)
             if (answersResponse.code === 20000) {
               if (answersResponse.data.length === 0) {
-                // 如果没有解答，则显示暂无解答
                 question.noAnswersMessage = '暂无解答'
               } else {
-                // 将后端返回的 answers 数据填充到 question.answers 中
                 question.answers = answersResponse.data.map(answer => ({
                   ...answer,
-                  content: answer.content, // 解答内容
-                  createdAt: this.formatDate(answer.createdAt), // 格式化时间
-                  answererId: answer.answererId, // 解答者 ID
-                  score: answer.score // 解答评分
+                  id: answer.answerId,
+                  isExcellent: answer.isExcellent,
+                  content: answer.content,
+                  createdAt: this.formatDate(answer.createdAt),
+                  answererId: answer.answererId,
+                  score: answer.score,
+                  hasRated: false,
+                  newScore: null
                 }))
               }
             } else {
@@ -143,7 +164,7 @@ export default {
     },
     // Toggle the answer form visibility
     toggleAnswerForm(questionId) {
-      const question = this.questions.find(q => q.id === questionId) // 使用 question.id
+      const question = this.questions.find(q => q.id === questionId)
       question.showAnswerForm = !question.showAnswerForm
     },
     // 提交问题
@@ -168,16 +189,33 @@ export default {
         const response = await submitQuestion(question)
         if (response.code === 20000) {
           this.$message.success('问题提交成功！')
-          this.questionTitle = '' // 清空标题输入框
-          this.questionDescription = '' // 清空描述输入框
-          this.questionCategory = '' // 清空类别输入框
-          this.fetchQuestions(this.course.courseId) // 提交成功后刷新问题列表
+          this.questionTitle = ''
+          this.questionDescription = ''
+          this.questionCategory = ''
+          this.fetchQuestions(this.course.courseId)
         } else {
           this.submitError = '提交问题失败，请稍后再试'
         }
       } catch (error) {
         console.error('提交问题时出错:', error)
         this.submitError = '提交问题失败，请稍后再试'
+      } finally {
+        this.isSubmitting = false
+      }
+    },
+    async setExcellent(questionId) {
+      this.isSubmitting = true
+      try {
+        const response = await setExcellentQuestion(questionId) // 调用 API 设置优秀问题
+        if (response.code === 20000) {
+          this.$message.success('问题已标记为优秀问题')
+          this.fetchQuestions(this.course.courseId)
+        } else {
+          this.$message.error('设置优秀问题失败')
+        }
+      } catch (error) {
+        console.error('标记问题为优秀问题时出错:', error)
+        this.$message.error('设置优秀问题失败，请稍后再试')
       } finally {
         this.isSubmitting = false
       }
@@ -192,7 +230,7 @@ export default {
       this.isSubmitting = true
 
       const answer = {
-        questionId: question.id, // 使用 question.id
+        questionId: question.id,
         answererId: this.roleid,
         content: question.answerText
       }
@@ -201,8 +239,8 @@ export default {
         const response = await submitAnswer(answer)
         if (response.code === 20000) {
           this.$message.success('解答提交成功！')
-          question.answerText = '' // 清空输入框
-          this.fetchQuestions(this.course.courseId) // 提交成功后刷新问题列表
+          question.answerText = ''
+          this.fetchQuestions(this.course.courseId)
         } else {
           this.$message.error('提交解答失败，请稍后再试')
         }
@@ -213,14 +251,32 @@ export default {
         this.isSubmitting = false
       }
     },
-    // 格式化日期
-    formatDate(dateString) {
-      const date = new Date(dateString)
-      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
+    // 提交评分
+    async submitRating(answer, question) {
+      console.log(answer.newScore, answer.id)
+      try {
+        const response = await submitAnswerRating(answer.id, answer.newScore)
+        if (response.code === 20000) {
+          this.$message.success('评分提交成功')
+          answer.hasRated = true
+          answer.score = answer.newScore // 更新评分显示
+        } else {
+          this.$message.error('评分提交失败')
+        }
+      } catch (error) {
+        console.error('评分提交时出错:', error)
+        this.$message.error('评分提交失败，请稍后再试')
+      }
+    },
+    // 格式化时间
+    formatDate(timestamp) {
+      const date = new Date(timestamp)
+      return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`
     }
   }
 }
 </script>
+
 <style scoped>
 .course-detail {
   padding: 20px;

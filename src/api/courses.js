@@ -1,5 +1,13 @@
 import request from '@/utils/request'
 
+export function submitAnswerRating(answerId, score) {
+  return request({
+    url: `/answers/score/${answerId}`,
+    method: 'put',
+    params: { score }
+  })
+}
+
 // 获取课程列表
 export function fetchCourseList() {
   return request({
@@ -7,7 +15,13 @@ export function fetchCourseList() {
     method: 'get'
   })
 }
-
+// 设置问题为优秀问题
+export function setExcellentQuestion(questionId) {
+  return request({
+    url: `/question/excellent/${questionId}`,
+    method: 'put'
+  })
+}
 // 创建新课程
 export function createCourse(data) {
   return request({
@@ -57,10 +71,10 @@ export function submitAnswer(data) {
 export function fetchQuestionAnswers(questionId) {
   return request({
     url: `/answers/question/${questionId}`,
-    method: 'get',
-    data: {
-      questionId
-    }
+    method: 'get'
+    // data: {
+    //   questionId
+    // }
   })
 }
 export function fetchCourseQuestions(courseId) {
