@@ -46,6 +46,12 @@ export function submitQuestion(data) {
     }
   })
 }
+export function fetchCourseQuestions(courseId) {
+  return request({
+    url: `/question/${courseId}/questions`,
+    method: 'get'
+  })
+}
 // 删除课程
 export function deleteCourse(courseId) {
   return request({

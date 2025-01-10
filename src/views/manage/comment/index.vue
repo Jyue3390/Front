@@ -1,18 +1,13 @@
 <template>
-  <div class="home">
-    <!-- Header -->
-    <div class="header">
-      <h1 class="page-title">审核评论页面</h1>
-    </div>
-    <!-- Display Comments -->
-    <div class="comments">
-      <div v-for="comment in comments" :key="comment.id" class="comment">
-        <p><strong>{{ comment.userName }}:</strong> {{ comment.content }}</p>
-        <div class="audit-buttons">
-          <button @click="handleAudit(comment.id, 1)">审核通过</button>
-          <button @click="handleAudit(comment.id, 2)">审核不通过</button>
-          <!-- 禁言按钮 -->
-          <button @click="muteUser(comment.userId)">禁言</button>
+  <div class="course-container">
+    <div v-for="(courses, category) in groupedCourses" :key="category" class="category-section">
+      <h2>{{ category }}</h2>
+      <div class="course-list">
+        <div v-for="course in courses" :key="course.courseId" class="course-item">
+          <h3>{{ course.courseName }}</h3>
+          <p>{{ course.description }}</p>
+          <!-- 点击按钮时跳转到课程详情页面 -->
+          <button @click="viewCourseDetails(course.courseId)">查看详情</button>
         </div>
       </div>
     </div>
@@ -20,193 +15,81 @@
 </template>
 
 <script>
-import { fetchComments, updateCommentAuditStatus, muteUserViolation } from '@/api/manage' // Include mute API
+import { fetchCourseList } from '@/api/courses' // 导入 fetchCourseList 接口
 
 export default {
-  name: 'Home',
   data() {
     return {
-      comments: [] // Comment data array
+      courseList: [] // 存储课程列表
     }
   },
-  async created() {
-    // Fetch comments when the component is created
-    await this.fetchComments()
+  computed: {
+    groupedCourses() {
+      // 按课程类别分组
+      return this.courseList.reduce((groups, course) => {
+        const category = course.category || '未分类'
+        if (!groups[category]) {
+          groups[category] = []
+        }
+        groups[category].push(course)
+        return groups
+      }, {})
+    }
+  },
+  created() {
+    this.fetchCourses()
   },
   methods: {
-    // Fetch comments with audit_status = 0
-    async fetchComments() {
+    async fetchCourses() {
       try {
-        const response = await fetchComments() // This should fetch the comments with audit_status = 0
-        if (response.code === 20000) {
-          this.comments = response.data // Set comments to the fetched data
-        } else {
-          this.$message.error('无法加载评论')
-        }
+        const response = await fetchCourseList() // 使用导入的接口函数
+        this.courseList = response.data
       } catch (error) {
-        console.error('获取评论时出错:', error)
-        this.$message.error('加载评论失败')
+        console.error('获取课程失败', error)
       }
     },
-    // Handle comment audit (approve or reject)
-    async handleAudit(commentId, status) {
-      try {
-        const response = await updateCommentAuditStatus(commentId, status) // Update audit status
-        if (response.code === 20000) {
-          this.$message.success(status === 1 ? '审核通过' : '审核不通过')
-          // After updating, remove the comment from the list
-          this.comments = this.comments.filter(comment => comment.id !== commentId)
-        } else {
-          this.$message.error('审核失败')
-        }
-      } catch (error) {
-        console.error('审核时出错:', error)
-        this.$message.error('审核操作失败')
-      }
-    },
-    // 禁言用户
-    async muteUser(userId) {
-      try {
-        const response = await muteUserViolation(userId) // Call the API to mute the user
-        if (response.code === 20000) {
-          this.$message.success('用户已被禁言')
-        } else {
-          this.$message.error('禁言失败')
-        }
-      } catch (error) {
-        console.error('禁言操作失败:', error)
-        this.$message.error('禁言操作失败')
-      }
+    viewCourseDetails(courseId) {
+      // 跳转到课程详情页，传递课程ID
+      this.$router.push({ name: 'CourseDetail', params: { id: courseId }})
     }
   }
 }
 </script>
 
 <style scoped>
-.home {
+.course-container {
   padding: 20px;
-  background-color: #f8f8f8;
-  left: 54px; /* 距离左边20px */
-  width: calc(100% - 54px); /* 总宽度减去左20px的空白 */
-  margin: 0 auto;
-  text-align: center;
 }
 
-.page-title {
-  font-size: 30px;
-  font-weight: bold;
-  color: #333;
+.category-section {
+  margin-bottom: 30px;
 }
 
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.photo {
-  cursor: pointer;
+.course-list {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-wrap: wrap;
 }
 
-.image-container {
-  position: relative;
-  overflow: hidden;
+.course-item {
+  width: 30%;
+  margin-right: 20px;
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  width: 100%;
 }
 
-.photo-img {
-  max-width: 100%;
-  display: block;
-  transition: transform 0.5s ease-in-out;
+h3 {
+  font-size: 1.2rem;
+  margin: 10px 0;
 }
 
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  margin-top: 10px;
-  gap: 4px;
-}
-
-.like-count {
-  margin-top: 8px;
-  margin-left: 0px;
-  font-size: 14px;
-  color: #555;
-}
-
-.like-button {
-  padding: 0;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.like-button.liked .heart {
-  color: red;
-}
-
-.like-button .heart {
-  font-size: 24px;
-}
-
-.comment-button {
-  padding: 0;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
-}
-
-.share-button {
-  padding: 0;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
-}
-
-.comment-input {
-  display: block;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.comment-input input {
-  padding: 6px;
-  width: 200px;
-  font-size: 14px;
-}
-
-.comment-input button {
-  padding: 6px;
-  font-size: 14px;
-  background-color: #3498db;
+button {
+  padding: 5px 10px;
+  background-color: #007bff;
   color: white;
   border: none;
   cursor: pointer;
-}
-
-.comments {
-  margin-top: 12px;
-  text-align: left;
-  width: 100%;
-}
-
-.comment {
-  margin-bottom: 10px;
-  padding: 8px;
-  border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 14px;
-}
-
-.share-dropdown {
-  display: inline-block;
 }
 </style>

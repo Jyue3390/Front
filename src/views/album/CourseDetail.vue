@@ -15,29 +15,43 @@
       <button @click="submitQuestion" :disabled="isSubmitting">提交问题</button>
       <p v-if="submitError" class="error-message">{{ submitError }}</p>
     </div>
+
+    <!-- 展示课程问题 -->
+    <div class="questions-list">
+      <h3>已提问的问题</h3>
+      <div v-if="questions.length === 0">暂无问题。</div>
+      <div v-for="(question, index) in questions" :key="index" class="question-item">
+        <h4>{{ question.title }}</h4>
+        <p><strong>类别:</strong> {{ question.questionCategory }}</p>
+        <p><strong>描述:</strong> {{ question.description }}</p>
+        <p><strong>提问时间:</strong> {{ formatDate(question.createdAt) }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { fetchCourseDetails, submitQuestion } from '@/api/courses'
-import { mapGetters } from 'vuex' // 导入获取课程详情和提交问题的接口
+import { fetchCourseDetails, submitQuestion, fetchCourseQuestions } from '@/api/courses'
+import { mapGetters } from 'vuex'
 
 export default {
   computed: {
-    ...mapGetters(['roleid', 'username', 'name', 'role', 'id', 'token']) // Vuex 状态
+    ...mapGetters(['roleid', 'username', 'name', 'role', 'id', 'token'])
   },
   data() {
     return {
-      course: {}, // 存储课程详细信息
-      questionTitle: '', // 存储问题标题
-      questionDescription: '', // 存储问题描述
-      questionCategory: '', // 存储问题类别
-      isSubmitting: false, // 防止重复提交
-      submitError: '' // 提交时的错误信息
+      course: {},
+      questionTitle: '',
+      questionDescription: '',
+      questionCategory: '',
+      isSubmitting: false,
+      submitError: '',
+      questions: [] // 用于存储问题列表
     }
   },
   created() {
-    this.fetchCourseDetail(this.$route.params.id) // 从路由获取课程ID并请求课程详情
+    this.fetchCourseDetail(this.$route.params.id) // 获取课程详情
+    this.fetchQuestions(this.$route.params.id) // 获取课程问题
   },
   methods: {
     // 获取课程详情
@@ -54,6 +68,20 @@ export default {
         this.$message.error('加载课程详情失败')
       }
     },
+    // 获取课程问题
+    async fetchQuestions(courseId) {
+      try {
+        const response = await fetchCourseQuestions(courseId)
+        if (response.code === 20000) {
+          this.questions = response.data // 将问题列表赋值给 questions
+        } else {
+          this.$message.error('无法加载课程问题')
+        }
+      } catch (error) {
+        console.error('获取课程问题时出错:', error)
+        this.$message.error('加载课程问题失败')
+      }
+    },
     // 提交问题
     async submitQuestion() {
       if (this.questionTitle.trim() === '' || this.questionDescription.trim() === '') {
@@ -65,11 +93,11 @@ export default {
       this.submitError = '' // 清除之前的错误信息
 
       const question = {
-        courseId: this.course.courseId, // 课程ID
+        courseId: this.course.courseId,
         studentId: this.roleid,
-        title: this.questionTitle, // 问题标题
-        description: this.questionDescription, // 问题描述
-        questionCategory: this.questionCategory // 问题类别
+        title: this.questionTitle,
+        description: this.questionDescription,
+        questionCategory: this.questionCategory
       }
 
       try {
@@ -79,6 +107,7 @@ export default {
           this.questionTitle = '' // 清空标题输入框
           this.questionDescription = '' // 清空描述输入框
           this.questionCategory = '' // 清空类别输入框
+          this.fetchQuestions(this.course.courseId) // 提交成功后刷新问题列表
         } else {
           this.submitError = '提交问题失败，请稍后再试'
         }
@@ -159,5 +188,23 @@ button:disabled {
 .error-message {
   color: red;
   font-size: 0.9rem;
+}
+
+.questions-list {
+  margin-top: 40px;
+}
+
+.question-item {
+  margin-bottom: 20px;
+}
+
+.question-item h4 {
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.question-item p {
+  font-size: 1rem;
+  color: #555;
 }
 </style>
