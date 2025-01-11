@@ -52,6 +52,14 @@
         <el-input v-model="registerForm.password" type="password" placeholder="Password" name="password" />
       </el-form-item>
 
+      <!-- 用户角色选择 -->
+      <el-form-item prop="role">
+        <el-select v-model="registerForm.role" placeholder="Select Role" name="role">
+          <el-option label="Teacher" value="teacher" />
+          <el-option label="Student" value="student" />
+        </el-select>
+      </el-form-item>
+
       <!-- 注册提交按钮 -->
       <el-button type="primary" style="width:100%;margin-bottom:20px;" @click.native.prevent="handleRegister">注册</el-button>
 
@@ -90,7 +98,7 @@ export default {
       registerForm: {
         username: '',
         password: '',
-        role: ''
+        role: '' // 新增 role 字段
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -98,7 +106,8 @@ export default {
       },
       registerRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
+        password: [{ required: true, trigger: 'blur', validator: validatePassword }],
+        role: [{ required: true, trigger: 'blur', message: '请选择角色' }] // 确保角色必选
       },
       loading: false,
       passwordType: 'password'
@@ -131,6 +140,7 @@ export default {
       this.$refs.registerForm.validate(valid => {
         if (valid) {
           this.loading = true
+          // 注册 API 数据格式：{ username, password, role }
           register(this.registerForm).then(() => {
             this.$message.success('注册成功，请登录')
             this.toggleRegister()

@@ -28,8 +28,7 @@ export function register(data) {
     url: '/user/register',
     method: 'post',
     data: {
-      ...data,
-      role: 'editor' // 默认设置role为editor
+      ...data
     }
   })
 }
