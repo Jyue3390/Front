@@ -16,10 +16,11 @@ export function fetchCourseList() {
   })
 }
 // 设置问题为优秀问题
-export function setExcellentQuestion(questionId) {
+export function submitQuestionRating(questionId, scoret) {
   return request({
     url: `/question/excellent/${questionId}`,
-    method: 'put'
+    method: 'put',
+    params: { scoret }
   })
 }
 // 创建新课程

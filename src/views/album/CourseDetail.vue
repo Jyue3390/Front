@@ -17,44 +17,43 @@
     </div>
 
     <!-- 展示课程问题 -->
-      <div class="questions-list">
-        <h3>已提问的问题</h3>
-        <div v-if="questions.length === 0">暂无问题。</div>
-        <div v-for="(question, index) in questions" :key="index" class="question-item">
-          <h4>{{ question.title }}</h4>
-          <p><strong>类别:</strong> {{ question.questionCategory }}</p>
-          <p><strong>描述:</strong> {{ question.description }}</p>
-          <p><strong>提问时间:</strong> {{ formatDate(question.createdAt) }}</p>
+    <div class="questions-list">
+      <h3>已提问的问题</h3>
+      <div v-if="questions.length === 0">暂无问题。</div>
+      <div v-for="(question, index) in questions" :key="index" class="question-item">
+        <h4>{{ question.title }}</h4>
+        <p><strong>类别:</strong> {{ question.questionCategory }}</p>
+        <p><strong>描述:</strong> {{ question.description }}</p>
+        <p><strong>提问时间:</strong> {{ formatDate(question.createdAt) }}</p>
+        <p><strong>评分:</strong> {{ question.score }}</p>
+        <!-- Answer Section -->
+        <button @click="toggleAnswerForm(question.id)">解答</button>
+        <!-- Answer Submission Form -->
+        <div v-if="question.showAnswerForm" class="answer-form">
+          <textarea v-model="question.answerText" placeholder="请输入您的解答..." rows="4" />
+          <button :disabled="isSubmitting" @click="submitAnswer(question)">提交解答</button>
+        </div>
 
-          <!-- Answer Section -->
-          <button @click="toggleAnswerForm(question.id)">解答</button>
-
-          <!-- Answer Submission Form -->
-          <div v-if="question.showAnswerForm" class="answer-form">
-            <textarea v-model="question.answerText" placeholder="请输入您的解答..." rows="4"></textarea>
-            <button :disabled="isSubmitting" @click="submitAnswer(question)">提交解答</button>
-          </div>
-
-          <!-- Display Answers -->
-          <div v-if="question.answers && question.answers.length > 0">
-            <h5>已有解答:</h5>
-            <div v-for="(answer, idx) in question.answers" :key="idx" class="answer-item">
-              <p><strong>解答:</strong> {{ answer.content }}</p>
-              <p><strong>时间:</strong> {{ answer.createdAt }}</p>
-              <p><strong>解答者 ID:</strong> {{ answer.answererId }}</p> <!-- 显示解答者 ID -->
-              <p><strong>评分:</strong> {{ answer.score }}</p> <!-- 显示评分 -->
-            </div>
-          </div>
-
-          <!-- Show 'No Answers' message if no answers -->
-          <div v-if="question.noAnswersMessage" class="no-answers-message">
-            <p>暂无解答</p>
+        <!-- Display Answers -->
+        <div v-if="question.answers && question.answers.length > 0">
+          <h5>已有解答:</h5>
+          <div v-for="(answer, idx) in question.answers" :key="idx" class="answer-item">
+            <p><strong>解答:</strong> {{ answer.content }}</p>
+            <p><strong>时间:</strong> {{ answer.createdAt }}</p>
+            <p><strong>解答者 ID:</strong> {{ answer.answererId }}</p> <!-- 显示解答者 ID -->
+            <p><strong>评分:</strong> {{ answer.score }}</p> <!-- 显示评分 -->
           </div>
         </div>
-      </div>
 
+        <!-- Show 'No Answers' message if no answers -->
+        <div v-if="question.noAnswersMessage" class="no-answers-message">
+          <p>暂无解答</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
+
 <script>
 import {
   fetchCourseDetails,
@@ -107,26 +106,25 @@ export default {
           this.questions = response.data.map(question => ({
             ...question,
             id: question.questionId, // 将 questionId 映射为 id
+            score: question.excellent,
             showAnswerForm: false, // Initially hide the answer form
             answerText: '', // For holding the answer input
-            answers: [] // Initialize answers array
+            answers: [], // Initialize answers array
+            noAnswersMessage: '' // Message when no answers are available
           }))
-
-          // For each question, fetch its answers
           for (const question of this.questions) {
             const answersResponse = await fetchQuestionAnswers(question.id)
             if (answersResponse.code === 20000) {
               if (answersResponse.data.length === 0) {
-                // 如果没有解答，则显示暂无解答
                 question.noAnswersMessage = '暂无解答'
               } else {
-                // 将后端返回的 answers 数据填充到 question.answers 中
                 question.answers = answersResponse.data.map(answer => ({
                   ...answer,
-                  content: answer.content, // 解答内容
-                  createdAt: this.formatDate(answer.createdAt), // 格式化时间
-                  answererId: answer.answererId, // 解答者 ID
-                  score: answer.score // 解答评分
+                  id: answer.answerId,
+                  content: answer.content,
+                  createdAt: this.formatDate(answer.createdAt),
+                  answererId: answer.answererId,
+                  score: answer.score
                 }))
               }
             } else {
@@ -143,7 +141,7 @@ export default {
     },
     // Toggle the answer form visibility
     toggleAnswerForm(questionId) {
-      const question = this.questions.find(q => q.id === questionId) // 使用 question.id
+      const question = this.questions.find(q => q.id === questionId)
       question.showAnswerForm = !question.showAnswerForm
     },
     // 提交问题
@@ -168,10 +166,10 @@ export default {
         const response = await submitQuestion(question)
         if (response.code === 20000) {
           this.$message.success('问题提交成功！')
-          this.questionTitle = '' // 清空标题输入框
-          this.questionDescription = '' // 清空描述输入框
-          this.questionCategory = '' // 清空类别输入框
-          this.fetchQuestions(this.course.courseId) // 提交成功后刷新问题列表
+          this.questionTitle = ''
+          this.questionDescription = ''
+          this.questionCategory = ''
+          this.fetchQuestions(this.course.courseId)
         } else {
           this.submitError = '提交问题失败，请稍后再试'
         }
@@ -185,26 +183,26 @@ export default {
     // 提交解答
     async submitAnswer(question) {
       if (question.answerText.trim() === '') {
-        this.$message.error('解答内容不能为空！')
+        this.$message.warning('请填写解答内容')
         return
       }
 
-      this.isSubmitting = true
-
       const answer = {
-        questionId: question.id, // 使用 question.id
+        questionId: question.id,
         answererId: this.roleid,
         content: question.answerText
       }
 
+      this.isSubmitting = true
+
       try {
         const response = await submitAnswer(answer)
         if (response.code === 20000) {
-          this.$message.success('解答提交成功！')
-          question.answerText = '' // 清空输入框
-          this.fetchQuestions(this.course.courseId) // 提交成功后刷新问题列表
+          question.answerText = ''
+          this.$message.success('解答提交成功')
+          this.fetchQuestions(this.course.courseId)
         } else {
-          this.$message.error('提交解答失败，请稍后再试')
+          this.$message.error('解答提交失败')
         }
       } catch (error) {
         console.error('提交解答时出错:', error)
@@ -214,13 +212,14 @@ export default {
       }
     },
     // 格式化日期
-    formatDate(dateString) {
-      const date = new Date(dateString)
-      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
+    formatDate(date) {
+      const d = new Date(date)
+      return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`
     }
   }
 }
 </script>
+
 <style scoped>
 .course-detail {
   padding: 20px;

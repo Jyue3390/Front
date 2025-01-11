@@ -39,12 +39,12 @@ export default {
       if (this.role === 'teacher') {
         // admin 看到所有路由
         return allRoutes.filter(route =>
-          route.path === '/' || route.path === '/comment' || route.path === 'external-link'
+          route.path === '/' || route.path === '/comment' || route.path === '/mine' || route.path === 'external-link'
         )
       } else if (this.role === 'student') {
         // editor 只看到 dashboard 和 form
         return allRoutes.filter(route =>
-          route.path === '/' || route.path === '/form' || route.path === 'external-link'
+          route.path === '/' || route.path === '/form' || route.path === '/mine' || route.path === 'external-link'
         )
       }
       return []
